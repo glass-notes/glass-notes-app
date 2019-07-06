@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -29,6 +30,6 @@ public class MainActivity extends Activity {
     }
 
     public void onClick_CreateNewNoteButton(View view) {
-        // Transition to new view
+        startActivity(new Intent(this, EditActivity.class));
     }
 }

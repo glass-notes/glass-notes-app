@@ -9,6 +9,10 @@
     <EditText
         android:id="@+id/note_edit_text"
         android:layout_width="match_parent"
+        android:fontFamily="monospace"
+        android:textSize="4sp"
+        android:inputType="textFilter|textMultiLine|textNoSuggestions"
+        android:gravity="top"
         android:layout_height="match_parent" />
 
 </android.widget.LinearLayout>
