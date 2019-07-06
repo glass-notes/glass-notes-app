@@ -20,6 +20,7 @@
             android:layout_weight="1"
             android:height="10dp"
             android:minHeight="0dp"
+            android:onClick="onClick_CreateNewNoteButton"
             android:text="@string/create_new_note"
             android:textAlignment="viewStart"
             android:textSize="4sp" />
