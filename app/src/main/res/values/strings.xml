@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">GlassNotes</string>
+    <string name="create_new_note">Create New Note</string>
+    <string name="add_new_todo_button">Add new TODO</string>
 </resources>

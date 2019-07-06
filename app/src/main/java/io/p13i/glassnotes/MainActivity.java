@@ -4,6 +4,8 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 
 public class MainActivity extends Activity {
 
@@ -11,5 +13,16 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        ArrayAdapter adapter = new ArrayAdapter<String>(this,
+                R.layout.activity_listview, new String[]{
+                "A",
+                "B",
+                "C"
+        });
+
+        ListView listView = (ListView) findViewById(R.id.existing_notes_listview);
+        listView.setAdapter(adapter);
+
     }
 }
