@@ -1,8 +1,11 @@
 package io.p13i.glassnotes;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
@@ -10,15 +13,23 @@ import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements SelectableTextViewsManager.OnTextViewSelectedListener {
 
     @BindView(R.id.activity_main_layout)
     LinearLayout mLinearLayout;
 
     SelectableTextViewsManager mSelectableTextViewsManager;
+
+    List<Note> mNotes = new ArrayList<Note>() {{
+        add(new Note("2019-07-07 - Grocery List"));
+        add(new Note("2019-07-07 - CS 4001"));
+    }};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,49 +40,101 @@ public class MainActivity extends Activity {
 
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        mLinearLayout.setFocusable(true);
+
 
         populateLayout();
     }
 
-    void setTextViewCommonStyles(TextView textView) {
-        textView.setTextColor(getResources().getColor(R.color.white));
+    static void setTextViewCommonStyles(Context context, TextView textView) {
+        textView.setTextColor(context.getResources().getColor(R.color.white));
         textView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
         textView.setTextSize(4f);
     }
 
     void populateLayout() {
-        mSelectableTextViewsManager = new SelectableTextViewsManager(mLinearLayout) {{
-            addChild(new TextView(MainActivity.this) {{
+        // Add the controls
+        mSelectableTextViewsManager = new SelectableTextViewsManager(mLinearLayout, this) {{
+            addManagedTextViewChild(new TextView(MainActivity.this) {{
                 setId(View.generateViewId());
-                setText("Create new note    →");
-                setTextViewCommonStyles(this);
+                setText(R.string.create_new_note);
+                setTextViewCommonStyles(MainActivity.this, this);
             }});
 
-            addChild(new TextView(MainActivity.this) {{
+            addManagedTextViewChild(new TextView(MainActivity.this) {{
                 setId(View.generateViewId());
-                setText("Add new TODO       →");
-                setTextViewCommonStyles(this);
+                setText(R.string.add_new_todo);
+                setTextViewCommonStyles(MainActivity.this, this);
             }});
 
-            addChild(new TextView(MainActivity.this) {{
+            addViewChild(new TextView(MainActivity.this) {{
                 setId(View.generateViewId());
-                setText("Open existing:");
-                setTextViewCommonStyles(this);
+                setText("");
+                setTextViewCommonStyles(MainActivity.this, this);
+            }});
+
+            addManagedTextViewChild(new TextView(MainActivity.this) {{
+                setId(View.generateViewId());
+                setText(R.string.add_existing);
+                setTextViewCommonStyles(MainActivity.this, this);
+            }});
+
+            addViewChild(new TextView(MainActivity.this) {{
+                setId(View.generateViewId());
+                setText("");
+                setTextViewCommonStyles(MainActivity.this, this);
             }});
 
             init();
         }};
+
+        for (Note note : mNotes) {
+            mSelectableTextViewsManager.addManagedTextViewChild(new TextView(MainActivity.this) {{
+                setId(View.generateViewId());
+                setText(note.getTitle());
+                setTextViewCommonStyles(MainActivity.this, this);
+            }});
+        }
     }
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
+        Log.e("HERE", Integer.toString(keyCode));
         switch (keyCode) {
             case KeyEvent.KEYCODE_DPAD_DOWN:
-                return mSelectableTextViewsManager.onKeyUp(keyCode, event);
+                mSelectableTextViewsManager.handleKeypadDpadDown();
+                return true;
             case KeyEvent.KEYCODE_DPAD_UP:
-                return mSelectableTextViewsManager.onKeyUp(keyCode, event);
+                mSelectableTextViewsManager.handleKeypadDpadUp();
+                return true;
+            case KeyEvent.KEYCODE_ENTER:
+                mSelectableTextViewsManager.handleEnter();
+                return true;
             default:
                 return super.onKeyUp(keyCode, event);
+        }
+    }
+
+    Note getNoteWithTitle(String title) {
+        for (Note note : mNotes) {
+            if (note.getTitle().equals(title)) {
+                return note;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void onTextViewSelected(TextView textView) {
+        String text = textView.getText().toString();
+        if (text.equals(getResources().getString(R.string.create_new_note))) {
+            textView.setText(text + " *");
+        } else if (text.equals(getResources().getString(R.string.add_new_todo))) {
+            textView.setText(text + " **");
+        } else if (getNoteWithTitle(text) != null) {
+            Intent intent = new Intent(this, EditActivity.class);
+            intent.putExtra(Note.EXTRA_TAG, getNoteWithTitle(text));
+            startActivity(intent);
         }
     }
 }

@@ -7,19 +7,23 @@ import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import org.w3c.dom.Text;
+
 import java.util.ArrayList;
 import java.util.List;
 
 class SelectableTextViewsManager {
     private ViewGroup mParentViewGroup;
+    private OnTextViewSelectedListener mOnTextViewSelectedListener;
 
     private List<TextView> mTextViews = new ArrayList<>();
 
-    SelectableTextViewsManager(ViewGroup parentViewGroup) {
+    SelectableTextViewsManager(ViewGroup parentViewGroup, SelectableTextViewsManager.OnTextViewSelectedListener onTextViewSelectedListener) {
         mParentViewGroup = parentViewGroup;
+        mOnTextViewSelectedListener = onTextViewSelectedListener;
     }
 
-    void addChild(TextView textView) {
+    void addManagedTextViewChild(TextView textView) {
 
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         if (mTextViews.size() > 0) {
@@ -30,49 +34,53 @@ class SelectableTextViewsManager {
         mParentViewGroup.addView(textView);
     }
 
+    void addViewChild(View view) {
+        mParentViewGroup.addView(view);
+    }
 
-    private void handleKeypadDpadDown() {
+
+    public void handleKeypadDpadDown() {
         // Set the next element to underlined
-        TextView nextTextView = (TextView) getNextChild(mParentViewGroup, getSelectedTextView());
+        TextView nextTextView = (TextView) getNextChild(getSelectedTextView());
         if (nextTextView != null) {
             setSelectedTextView(nextTextView);
         }
     }
 
-    private void handleKeypadDpadUp() {
+    public void handleKeypadDpadUp() {
         // Set the next element to underlined
-        TextView previousTextView = (TextView) getPreviousChild(mParentViewGroup, getSelectedTextView());
+        TextView previousTextView = (TextView) getPreviousChild(getSelectedTextView());
         if (previousTextView != null) {
             setSelectedTextView(previousTextView);
         }
     }
 
-    boolean onKeyUp(int keyCode, KeyEvent event) {
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_DPAD_DOWN:
-                handleKeypadDpadDown();
-                return true;
-            case KeyEvent.KEYCODE_DPAD_UP:
-                handleKeypadDpadUp();
-                return true;
-            default:
-                return false;
-        }
+    public void handleEnter() {
+        mOnTextViewSelectedListener.onTextViewSelected(getSelectedTextView());
     }
 
-    private View getNextChild(ViewGroup inViewGroup, View afterView) {
-        for (int i = 0; i < inViewGroup.getChildCount() - 1; i++) {
-            if (inViewGroup.getChildAt(i).getId() == afterView.getId()) {
-                return inViewGroup.getChildAt(i + 1);
+    private boolean managingTextView(View textView) {
+        for (TextView tv : mTextViews) {
+            if (tv.getId() == textView.getId()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private View getNextChild(View afterView) {
+        for (int i = 0; i < mTextViews.size() - 1; i++) {
+            if (mTextViews.get(i).getId() == afterView.getId()) {
+                return mTextViews.get(i + 1);
             }
         }
         return null;
     }
 
-    private View getPreviousChild(ViewGroup inViewGroup, View afterView) {
-        for (int i = 1; i < inViewGroup.getChildCount(); i++) {
-            if (inViewGroup.getChildAt(i).getId() == afterView.getId()) {
-                return inViewGroup.getChildAt(i - 1);
+    private View getPreviousChild(View afterView) {
+        for (int i = 1; i < mTextViews.size(); i++) {
+            if (mTextViews.get(i).getId() == afterView.getId()) {
+                return mTextViews.get(i - 1);
             }
         }
         return null;
@@ -105,5 +113,9 @@ class SelectableTextViewsManager {
         for (int i = 1; i < mTextViews.size(); i++) {
             removeUnderline(mTextViews.get(i));
         }
+    }
+
+    interface OnTextViewSelectedListener {
+        void onTextViewSelected(TextView textView);
     }
 }
