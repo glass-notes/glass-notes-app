@@ -3,6 +3,7 @@ package io.p13i.glassnotes;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -15,8 +16,12 @@ import java.util.TimerTask;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.p13i.glassnotes.API.GlassNotesClient;
+import okhttp3.ResponseBody;
 
 public class EditActivity extends Activity {
+
+    public final static String TAG = EditActivity.class.getName();
 
     @BindView(R.id.note_edit_text)
     EditText mNoteEditText;
@@ -42,23 +47,66 @@ public class EditActivity extends Activity {
 
         MainActivity.setTextViewCommonStyles(this, mLastSaveTextView);
         mLastSaveTextView.setTextColor(getResources().getColor(R.color.black));
-        mNoteEditText.setText(mNote.getContents());
+        mNoteEditText.setEnabled(false);
 
+        GlassNotesClient.getNote(mNote.getId(), new GlassNotesClient.Promise<Note>() {
+            @Override
+            public void resolved(Note data) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mNote = data;
+                        mNoteEditText.setText(mNote.getContent());
+                        mNoteEditText.setEnabled(true);
+                        startSaveTimer();
+                    }
+                });
+            }
+
+            @Override
+            public void failed(Throwable t) {
+                Log.e(TAG, "Failed to fetch getGist.", t);
+            }
+        });
+
+
+
+    }
+
+    void startSaveTimer() {
         mSaveTimer = new Timer();
         mSaveTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                mNote.setContents(mNoteEditText.getText().toString());
-                runOnUiThread(new Runnable() {
+                String currentText = mNote.mContents;
+                String updatedText = mNoteEditText.getText().toString();
+
+                if (currentText.equals(updatedText)) {
+                    return;
+                }
+
+                // Else, it was updated
+                mNote.setContent(mNoteEditText.getText().toString());
+
+                GlassNotesClient.saveNote(mNote, new GlassNotesClient.Promise<ResponseBody>() {
                     @Override
-                    public void run() {
-                        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-                        String currentDateandTime = sdf.format(new Date());
-                        mLastSaveTextView.setText("Last save: (" + currentDateandTime + ")");
+                    public void resolved(ResponseBody data) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
+                                String currentDateandTime = sdf.format(new Date());
+                                mLastSaveTextView.setText("Last save: (" + currentDateandTime + ")");
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void failed(Throwable t) {
+                        Log.e(TAG, "Failed to fetch getGist.", t);
                     }
                 });
             }
-        }, 5000, 5000);
-
+        }, 5_000, 5_000);
     }
 }

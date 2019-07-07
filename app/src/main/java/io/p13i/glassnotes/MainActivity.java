@@ -18,18 +18,18 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.p13i.glassnotes.API.GlassNotesClient;
 
 public class MainActivity extends Activity implements SelectableTextViewsManager.OnTextViewSelectedListener {
+
+    private final static String TAG = MainActivity.class.getName();
 
     @BindView(R.id.activity_main_layout)
     LinearLayout mLinearLayout;
 
     SelectableTextViewsManager mSelectableTextViewsManager;
 
-    List<Note> mNotes = new ArrayList<Note>() {{
-        add(new Note("2019-07-07 - Grocery List"));
-        add(new Note("2019-07-07 - CS 4001"));
-    }};
+    List<Note> mNotes = new ArrayList<Note>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,8 +42,32 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
         ButterKnife.bind(this);
         mLinearLayout.setFocusable(true);
 
-
         populateLayout();
+
+        GlassNotesClient.getNotes(new GlassNotesClient.Promise<List<Note>>() {
+            @Override
+            public void resolved(List<Note> data) {
+                for (Note note : data) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mSelectableTextViewsManager.addManagedTextViewChild(new TextView(MainActivity.this) {{
+                                setId(View.generateViewId());
+                                setText(note.getTitle());
+                                setTextViewCommonStyles(MainActivity.this, this);
+                            }});
+                        }
+                    });
+                }
+                mNotes = data;
+            }
+
+            @Override
+            public void failed(Throwable t) {
+                Log.e(TAG, "Failed getGist fetch", t);
+            }
+        });
+
     }
 
     static void setTextViewCommonStyles(Context context, TextView textView) {
@@ -88,13 +112,6 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
             init();
         }};
 
-        for (Note note : mNotes) {
-            mSelectableTextViewsManager.addManagedTextViewChild(new TextView(MainActivity.this) {{
-                setId(View.generateViewId());
-                setText(note.getTitle());
-                setTextViewCommonStyles(MainActivity.this, this);
-            }});
-        }
     }
 
     @Override
