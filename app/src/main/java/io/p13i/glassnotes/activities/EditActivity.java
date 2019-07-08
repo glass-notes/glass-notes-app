@@ -8,16 +8,12 @@ import android.view.KeyEvent;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
-import android.widget.TextView;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.p13i.glassnotes.datastores.localdisk.LocalDiskGlassNotesDataStore;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.R;
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
@@ -25,8 +21,11 @@ import io.p13i.glassnotes.datastores.github.GlassNotesGitHubAPIClient;
 import io.p13i.glassnotes.ui.StatusTextView;
 import io.p13i.glassnotes.user.Preferences;
 import io.p13i.glassnotes.utilities.DateUtilities;
-import okhttp3.ResponseBody;
 
+
+/**
+ * Activity for editing a given Note
+ */
 public class EditActivity extends Activity {
 
     public final static String TAG = EditActivity.class.getName();
@@ -45,51 +44,59 @@ public class EditActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // Full screen, no app bar
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_edit);
         ButterKnife.bind(this);
 
+        // Get the target Note from the activity transition
         mNote = (Note) getIntent().getSerializableExtra(Note.EXTRA_TAG);
 
+        // Disable editing until the file is loaded from the datastore
         mNoteEditText.setEnabled(false);
         mNoteEditText.setTextColor(getResources().getColor(R.color.white));
 
+        // Load the Note's content from the data store
         mGlassNotesDataStore = Preferences.getUserPreferredDataStore(this);
         mGlassNotesDataStore.getNote(mNote.getId(), new GlassNotesGitHubAPIClient.Promise<Note>() {
             @Override
             public void resolved(Note data) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        mNote = data;
-                        mNoteEditText.setText(mNote.getContent());
-                        mNoteEditText.setSelection(mNoteEditText.getText().length());
-                        mNoteEditText.setEnabled(true);
-                        startSaveTimer();
-                    }
+                runOnUiThread(() -> {
+                    mNote = data;
+                    mNoteEditText.setText(mNote.getContent());
+                    // Scoll to the end
+                    mNoteEditText.setSelection(mNoteEditText.getText().length());
+                    // Allow editing
+                    mNoteEditText.setEnabled(true);
+                    // Save on an interval
+                    startSaveTimer();
                 });
             }
 
             @Override
             public void rejected(Throwable t) {
-                Log.e(TAG, "Failed to fetch getGist.", t);
+                Log.e(TAG, "Failed to fetch gist.", t);
             }
         });
 
+        // Set some status bar elements
         mStatusTextView.setPageTitle(mNote.getTitle());
         mStatusTextView.setStatus("Welcome!");
     }
 
+    /**
+     * Saves the Note to the data store on an interval
+     */
     void startSaveTimer() {
         mSaveTimer = new Timer();
         mSaveTimer.schedule(new TimerTask() {
             @Override
             public void run() {
+                // Only update the data store if the contents have changed
                 String currentText = mNote.getContent();
                 String updatedText = mNoteEditText.getText().toString();
-
                 if (currentText.equals(updatedText)) {
                     return;
                 }
@@ -97,28 +104,26 @@ public class EditActivity extends Activity {
                 // Else, it was updated
                 mNote.setContent(mNoteEditText.getText().toString());
 
+                // Run the save task
                 mGlassNotesDataStore.saveNote(mNote, new GlassNotesGitHubAPIClient.Promise<Note>() {
                     @Override
                     public void resolved(Note data) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                mStatusTextView.setStatus("Saved: " + DateUtilities.nowAs("KK:mm:ss a"));
-                            }
-                        });
+                        runOnUiThread(() -> mStatusTextView.setStatus("Saved: " + DateUtilities.nowAs("KK:mm:ss a")));
                     }
 
                     @Override
                     public void rejected(Throwable t) {
-                        Log.e(TAG, "Failed to fetch gist.", t);
+                        Log.e(TAG, "Failed to save gist.", t);
                     }
                 });
             }
-        }, 5_000, 5_000);
+        }, 5_000 /* start after 5 seconds */, 5_000 /* run every 5 seconds */);
     }
 
+    /**
+     * Use this to track special key code entries like ":x"
+     */
     boolean mSemicolonPressed = false;
-
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (keyCode == KeyEvent.KEYCODE_SEMICOLON) {
@@ -140,21 +145,30 @@ public class EditActivity extends Activity {
         return super.onKeyUp(keyCode, event);
     }
 
+    /**
+     * Saves the note and finishes the activity
+     */
     private void saveAndFinish() {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mStatusTextView.setText("Saving/exiting...");
-                mStatusTextView.invalidate();
-            }
+        // Update the UI
+        runOnUiThread(() -> {
+            mStatusTextView.setText("Saving/exiting...");
+            mStatusTextView.invalidate();   // forces update
         });
 
+        // Clear the timer
+        mSaveTimer.cancel();
+        mSaveTimer.purge();
+        mSaveTimer = null;
+
+        // Remove instances of ':x'
         String contents = mNoteEditText.getText().toString();
         contents = contents.replaceAll(":x", "");
         mNoteEditText.setText(contents);
 
+        // Update the data model's content
         mNote.setContent(contents);
 
+        // Save the note to the data store
         mGlassNotesDataStore.saveNote(mNote, new GlassNotesGitHubAPIClient.Promise<Note>() {
             @Override
             public void resolved(Note data) {
@@ -163,7 +177,7 @@ public class EditActivity extends Activity {
 
             @Override
             public void rejected(Throwable t) {
-                Log.e(TAG, "Failed to fetch gist.", t);
+                Log.e(TAG, "Failed to save gist.", t);
             }
         });
     }

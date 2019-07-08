@@ -13,13 +13,11 @@ import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.p13i.glassnotes.datastores.localdisk.LocalDiskGlassNotesDataStore;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.R;
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
@@ -27,15 +25,13 @@ import io.p13i.glassnotes.datastores.github.GlassNotesGitHubAPIClient;
 import io.p13i.glassnotes.ui.StatusTextView;
 import io.p13i.glassnotes.user.Preferences;
 import io.p13i.glassnotes.utilities.DateUtilities;
-import io.p13i.glassnotes.utilities.LimitedCountScrollableTextListManager;
+import io.p13i.glassnotes.utilities.LimitedViewItemManager;
 import io.p13i.glassnotes.utilities.SelectableTextViewsManager;
 
 
 public class MainActivity extends Activity implements SelectableTextViewsManager.OnTextViewSelectedListener {
 
     private final static String TAG = MainActivity.class.getName();
-
-    GlassNotesDataStore mGlassNotesDataStore;
 
     @BindView(R.id.activity_edit_status)
     StatusTextView mStatusTextView;
@@ -44,14 +40,15 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
     LinearLayout mLinearLayout;
 
     SelectableTextViewsManager mSelectableTextViewsManager;
-
-    LimitedCountScrollableTextListManager mLimitedCountScrollableTextListManager;
-    List<Note> mNotes = new ArrayList<Note>();
+    GlassNotesDataStore mGlassNotesDataStore;
+    LimitedViewItemManager<Note> mLimitedViewItemManager;
+    List<Note> mNotes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        // full screen, no app bar
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
@@ -60,12 +57,16 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
 
         mGlassNotesDataStore = Preferences.getUserPreferredDataStore(this);
 
+        // So that keyboard entry will be registered
         mLinearLayout.setFocusable(true);
 
+        // Add views
         populateLayout();
 
+        // Fetch from the data store and load into the UI
         reloadNotes();
 
+        // Set status elemeents
         mStatusTextView.setPageTitle("Welcome to GlassNotes!");
         mStatusTextView.setStatus(mGlassNotesDataStore.getShortName());
     }
@@ -77,14 +78,14 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
             @Override
             public void resolved(List<Note> data) {
                 mNotes = data;
-                mLimitedCountScrollableTextListManager = new LimitedCountScrollableTextListManager(mNotes, 5);
+                mLimitedViewItemManager = new LimitedViewItemManager<>(mNotes, /* maximumCount: */5);
                 clearNotesFromView();
                 setVisibleNotes();
             }
 
             @Override
             public void rejected(Throwable t) {
-                Log.e(TAG, "Failed getGist fetch", t);
+                Log.e(TAG, "Failed to get notes.", t);
             }
         });
     }
@@ -98,7 +99,7 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
 
     void setVisibleNotes() {
         // Populate again
-        List<Note> visibleNotes = mLimitedCountScrollableTextListManager.getVisibleStrings();
+        List<Note> visibleNotes = mLimitedViewItemManager.getVisibleItems();
         for (Note note : visibleNotes) {
             runOnUiThread(new Runnable() {
                 @Override
@@ -204,12 +205,12 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
             reloadNotes();
         } else if (selectedText.equals("▲")) {
             // Scroll up
-            mLimitedCountScrollableTextListManager.scrollUp();
+            mLimitedViewItemManager.scrollUp();
             clearNotesFromView();
             setVisibleNotes();
         } else if (selectedText.equals("▼")) {
             // Scroll down
-            mLimitedCountScrollableTextListManager.scrollDown();
+            mLimitedViewItemManager.scrollDown();
             clearNotesFromView();
             setVisibleNotes();
         } else if (getNoteWithTitle(selectedText) != null) {

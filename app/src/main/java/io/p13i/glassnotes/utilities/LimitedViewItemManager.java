@@ -1,29 +1,27 @@
 package io.p13i.glassnotes.utilities;
 
-import android.util.Log;
-
 import java.util.LinkedList;
 import java.util.List;
 
-public class LimitedCountScrollableTextListManager<T> {
-    public final static String TAG = LimitedCountScrollableTextListManager.class.getName();
+public class LimitedViewItemManager<T> {
+    public final static String TAG = LimitedViewItemManager.class.getName();
     List<T> mAllStrings;
     int mMaximumCount;
     int mCurrentStartIndex = 0;
 
-    public LimitedCountScrollableTextListManager(List<T> allStrings, int maximumCount) {
+    public LimitedViewItemManager(List<T> allStrings, int maximumCount) {
         mAllStrings = allStrings;
         mMaximumCount = maximumCount;
     }
 
-    public List<T> getVisibleStrings() {
-        List<T> visibleStrings = new LinkedList<>();
+    public List<T> getVisibleItems() {
+        List<T> visibleItems = new LinkedList<>();
         int currentStringIndex = mCurrentStartIndex;
-        while (currentStringIndex < mAllStrings.size() && visibleStrings.size() < mMaximumCount) {
-            visibleStrings.add(mAllStrings.get(currentStringIndex));
+        while (currentStringIndex < mAllStrings.size() && visibleItems.size() < mMaximumCount) {
+            visibleItems.add(mAllStrings.get(currentStringIndex));
             currentStringIndex++;
         }
-        return visibleStrings;
+        return visibleItems;
     }
 
     public void scrollUp() {

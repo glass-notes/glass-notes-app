@@ -9,6 +9,9 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Manages text view underlining for key up and down events. Kinda magical
+ */
 public class SelectableTextViewsManager {
     private ViewGroup mParentViewGroup;
     private OnTextViewSelectedListener mOnTextViewSelectedListener;
