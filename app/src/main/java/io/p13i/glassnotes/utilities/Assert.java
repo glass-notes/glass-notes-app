@@ -2,7 +2,7 @@ package io.p13i.glassnotes.utilities;
 
 public class Assert {
     public static void that(boolean condition) {
-        that(condition, "Assertion failed");
+        that(condition, "Assertion rejected");
     }
 
     public static void that(boolean condition, String message) {

@@ -67,6 +67,7 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
         reloadNotes();
 
         mStatusTextView.setPageTitle("Welcome to GlassNotes!");
+        mStatusTextView.setStatus(mGlassNotesDataStore.getShortName());
     }
 
     void reloadNotes() {
@@ -82,7 +83,7 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
             }
 
             @Override
-            public void failed(Throwable t) {
+            public void rejected(Throwable t) {
                 Log.e(TAG, "Failed getGist fetch", t);
             }
         });
@@ -225,7 +226,7 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
             }
 
             @Override
-            public void failed(Throwable t) {
+            public void rejected(Throwable t) {
                 throw new RuntimeException(t);
             }
         });

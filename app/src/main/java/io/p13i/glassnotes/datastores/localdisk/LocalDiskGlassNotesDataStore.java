@@ -10,7 +10,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -19,7 +18,6 @@ import io.p13i.glassnotes.datastores.GlassNotesDataStore;
 import io.p13i.glassnotes.datastores.github.ClientFactory;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.utilities.Assert;
-import okhttp3.ResponseBody;
 
 public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore {
     private static final String TAG = LocalDiskGlassNotesDataStore.class.getName();
@@ -94,6 +92,11 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore {
     }
 
     @Override
+    public String getShortName() {
+        return "LocalDisk";
+    }
+
+    @Override
     public void createNote(Note note, Promise<Note> promise) {
         Gson gson = ClientFactory.getGson();
         note.setId(generateTemporaryId());
@@ -118,7 +121,7 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore {
     public void getNote(String id, Promise<Note> promise) {
         String fileContents = read(id);
         if (fileContents == null) {
-            promise.failed(new Throwable());
+            promise.rejected(new Throwable());
         }
         Gson gson = ClientFactory.getGson();
         Note note = gson.fromJson(fileContents, Note.class);

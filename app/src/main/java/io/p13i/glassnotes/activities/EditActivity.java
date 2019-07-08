@@ -73,7 +73,7 @@ public class EditActivity extends Activity {
             }
 
             @Override
-            public void failed(Throwable t) {
+            public void rejected(Throwable t) {
                 Log.e(TAG, "Failed to fetch getGist.", t);
             }
         });
@@ -109,7 +109,7 @@ public class EditActivity extends Activity {
                     }
 
                     @Override
-                    public void failed(Throwable t) {
+                    public void rejected(Throwable t) {
                         Log.e(TAG, "Failed to fetch gist.", t);
                     }
                 });
@@ -162,7 +162,7 @@ public class EditActivity extends Activity {
             }
 
             @Override
-            public void failed(Throwable t) {
+            public void rejected(Throwable t) {
                 Log.e(TAG, "Failed to fetch gist.", t);
             }
         });

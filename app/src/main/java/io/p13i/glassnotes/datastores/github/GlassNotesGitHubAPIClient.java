@@ -1,18 +1,21 @@
 package io.p13i.glassnotes.datastores.github;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
 import io.p13i.glassnotes.models.Note;
-import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
     public static final String TAG = GlassNotesGitHubAPIClient.class.getName();
+
+    @Override
+    public String getShortName() {
+        return "GitHub";
+    }
 
     @Override
     public void createNote(Note note, Promise<Note> promise) {
@@ -25,7 +28,7 @@ public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
 
             @Override
             public void onFailure(Call<Gist> call, Throwable t) {
-                promise.failed(t);
+                promise.rejected(t);
             }
         });
 
@@ -50,7 +53,7 @@ public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
 
             @Override
             public void onFailure(Call<List<Gist>> call, Throwable t) {
-                promise.failed(t);
+                promise.rejected(t);
             }
         });
 
@@ -68,7 +71,7 @@ public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
 
             @Override
             public void onFailure(Call<Gist> call, Throwable t) {
-                promise.failed(t);
+                promise.rejected(t);
             }
         });
     }
@@ -84,7 +87,7 @@ public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
 
             @Override
             public void onFailure(Call<Note> call, Throwable t) {
-                promise.failed(t);
+                promise.rejected(t);
             }
         });
     }

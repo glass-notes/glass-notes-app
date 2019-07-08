@@ -7,6 +7,8 @@ import android.util.AttributeSet;
 import android.widget.TextView;
 
 import java.util.Date;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import io.p13i.glassnotes.utilities.DateUtilities;
 
@@ -16,8 +18,7 @@ public class StatusTextView extends TextView {
     String mPageTitle = "Page Title";
     int mCurrentPageTitleStartingIndex = 0;
     String mStatus = "";
-    private Date mPreviousPageTitleUpdateDate = DateUtilities.now()
-            ;
+    private Timer mTimer;
 
     public StatusTextView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -40,9 +41,15 @@ public class StatusTextView extends TextView {
 
         setText(getShortPageTitle(mCurrentPageTitleStartingIndex) + " | " + now + " | " + mStatus);
 
-        if (DateUtilities.now().getSeconds() > mPreviousPageTitleUpdateDate.getSeconds()) {
-            mCurrentPageTitleStartingIndex = (mCurrentPageTitleStartingIndex + 1) % mPageTitle.length();
-            mPreviousPageTitleUpdateDate = DateUtilities.now();
+        if (mTimer == null) {
+            mTimer = new Timer();
+            mTimer.scheduleAtFixedRate(new TimerTask() {
+                @Override
+                public void run() {
+                    mCurrentPageTitleStartingIndex = (mCurrentPageTitleStartingIndex + 1) % mPageTitle.length();
+//                    setText(getShortPageTitle(mCurrentPageTitleStartingIndex));
+                }
+            }, 0, 1000);
         }
     }
 
