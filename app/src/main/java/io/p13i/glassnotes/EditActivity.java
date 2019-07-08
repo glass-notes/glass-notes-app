@@ -46,8 +46,8 @@ public class EditActivity extends Activity {
         mNote = (Note) getIntent().getSerializableExtra(Note.EXTRA_TAG);
 
         MainActivity.setTextViewCommonStyles(this, mLastSaveTextView);
-        mLastSaveTextView.setTextColor(getResources().getColor(R.color.black));
         mNoteEditText.setEnabled(false);
+        mNoteEditText.setTextColor(getResources().getColor(R.color.white));
 
         GlassNotesClient.getNote(mNote.getId(), new GlassNotesClient.Promise<Note>() {
             @Override

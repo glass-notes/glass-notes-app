@@ -17,7 +17,7 @@ public class GlassNotesClient {
 
     public static void getNotes(Promise<List<Note>> promise) {
         GitHubClient client = ClientFactory.getGitHubClient();
-        client.getGists("p13i").enqueue(new Callback<List<Gist>>() {
+        client.getGists().enqueue(new Callback<List<Gist>>() {
             @Override
             public void onResponse(Call<List<Gist>> call, Response<List<Gist>> response) {
                 List<Note> notes = new ArrayList<>();

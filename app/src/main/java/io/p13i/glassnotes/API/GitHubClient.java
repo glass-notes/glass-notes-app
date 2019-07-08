@@ -12,12 +12,12 @@ import retrofit2.http.PATCH;
 import retrofit2.http.Path;
 
 public interface GitHubClient {
-    public static final String AUTHORIZATION_HEADER = "Authorization: token 0e3242b9eafe34109d9ca74aeb58ce44e33e2571";
+    public static final String AUTHORIZATION_HEADER = "Authorization: token 73807bedca727ef9a136c2dfb5835c0bd99233cd";
 
 
     @Headers(AUTHORIZATION_HEADER)
-    @GET("/users/{user}/gists")
-    Call<List<Gist>> getGists(@Path("user") String user);
+    @GET("/gists")
+    Call<List<Gist>> getGists();
 
     @Headers(AUTHORIZATION_HEADER)
     @GET("/gists/{gistId}")

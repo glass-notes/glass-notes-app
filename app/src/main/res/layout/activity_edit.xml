@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="@color/black"
     tools:context=".EditActivity">
 
     <LinearLayout
@@ -23,6 +23,7 @@
             android:layout_width="match_parent"
             android:fontFamily="monospace"
             android:textSize="4sp"
+            android:textCursorDrawable="@null"
             android:inputType="textFilter|textMultiLine|textNoSuggestions"
             android:gravity="top"
             android:layout_height="match_parent" />
