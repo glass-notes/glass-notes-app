@@ -56,7 +56,7 @@ public class EditActivity extends Activity {
 
         // Disable editing until the file is loaded from the datastore
         mNoteEditText.setEnabled(false);
-        mNoteEditText.setText("Loading...");
+        mNoteEditText.setText(R.string.activity_edit_loading);
         mNoteEditText.setTextColor(getResources().getColor(R.color.white));
 
         // Load the Note's mContent from the data store
@@ -67,7 +67,7 @@ public class EditActivity extends Activity {
                 runOnUiThread(() -> {
                     mNote = data;
                     mNoteEditText.setText(mNote.getContent());
-                    // Scoll to the end
+                    // Scroll to the end of the file
                     mNoteEditText.setSelection(mNoteEditText.getText().length());
                     // Allow editing
                     mNoteEditText.setEnabled(true);
@@ -78,7 +78,7 @@ public class EditActivity extends Activity {
 
             @Override
             public void rejected(Throwable t) {
-                Log.e(TAG, "Failed to fetch gist.", t);
+                Log.e(TAG, getString(R.string.error_failed_to_get_note), t);
             }
         });
 
@@ -92,22 +92,7 @@ public class EditActivity extends Activity {
      */
     void startSaveTimer() {
         mSaveTimer = new Timer();
-        mSaveTimer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                saveNote(new GlassNotesGitHubAPIClient.Promise<Note>() {
-                    @Override
-                    public void resolved(Note data) {
-                        runOnUiThread(() -> mStatusTextView.setStatus("Saved: " + DateUtilities.nowAs("KK:mm:ss a")));
-                    }
-
-                    @Override
-                    public void rejected(Throwable t) {
-                        Log.e(TAG, "Failed to save gist.", t);
-                    }
-                });
-            }
-        }, 5_000 /* start after 5 seconds */, 5_000 /* run every 5 seconds */);
+        mSaveTimer.schedule(new SaveTimerTask(), /* start after: */ Preferences.SAVE_PERIOD_MS, /* run every: */ Preferences.SAVE_PERIOD_MS);
     }
 
     private void saveNote(GlassNotesDataStore.Promise<Note> notePromise) {
@@ -157,7 +142,7 @@ public class EditActivity extends Activity {
     private void saveAndFinish() {
         // Update the UI
         runOnUiThread(() -> {
-            mStatusTextView.setText("Saving/exiting...");
+            mStatusTextView.setText(R.string.activity_edit_saving_existing);
             mStatusTextView.invalidate();   // forces update
         });
 
@@ -182,8 +167,28 @@ public class EditActivity extends Activity {
 
             @Override
             public void rejected(Throwable t) {
-                Log.e(TAG, "Failed to save gist.", t);
+                Log.e(TAG, getString(R.string.error_failed_to_save_note), t);
             }
         });
+    }
+
+    /**
+     * Saves the note on a schedule
+     */
+    private class SaveTimerTask extends TimerTask {
+        @Override
+        public void run() {
+            saveNote(new GlassNotesGitHubAPIClient.Promise<Note>() {
+                @Override
+                public void resolved(Note data) {
+                    runOnUiThread(() -> mStatusTextView.setStatus("Saved: " + DateUtilities.nowAs("KK:mm:ss a")));
+                }
+
+                @Override
+                public void rejected(Throwable t) {
+                    Log.e(TAG, getString(R.string.error_failed_to_save_note), t);
+                }
+            });
+        }
     }
 }
