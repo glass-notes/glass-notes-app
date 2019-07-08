@@ -19,6 +19,7 @@ public class StatusTextView extends TextView {
     int mCurrentPageTitleStartingIndex = 0;
     String mStatus = "";
     private Timer mTimer;
+    private Date mNow;
 
     public StatusTextView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
@@ -46,7 +47,7 @@ public class StatusTextView extends TextView {
             mTimer.scheduleAtFixedRate(new TimerTask() {
                 @Override
                 public void run() {
-                    mCurrentPageTitleStartingIndex = (mCurrentPageTitleStartingIndex + 1) % mPageTitle.length();
+                    mCurrentPageTitleStartingIndex = mPageTitle.length() > 12 ? (mCurrentPageTitleStartingIndex + 1) % mPageTitle.length() : 0;
 //                    setText(getShortPageTitle(mCurrentPageTitleStartingIndex));
                 }
             }, 0, 1000);

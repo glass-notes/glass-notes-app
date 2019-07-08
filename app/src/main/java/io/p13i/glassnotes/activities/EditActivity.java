@@ -56,9 +56,10 @@ public class EditActivity extends Activity {
 
         // Disable editing until the file is loaded from the datastore
         mNoteEditText.setEnabled(false);
+        mNoteEditText.setText("Loading...");
         mNoteEditText.setTextColor(getResources().getColor(R.color.white));
 
-        // Load the Note's content from the data store
+        // Load the Note's mContent from the data store
         mGlassNotesDataStore = Preferences.getUserPreferredDataStore(this);
         mGlassNotesDataStore.getNote(mNote.getId(), new GlassNotesGitHubAPIClient.Promise<Note>() {
             @Override
@@ -94,18 +95,7 @@ public class EditActivity extends Activity {
         mSaveTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                // Only update the data store if the contents have changed
-                String currentText = mNote.getContent();
-                String updatedText = mNoteEditText.getText().toString();
-                if (currentText.equals(updatedText)) {
-                    return;
-                }
-
-                // Else, it was updated
-                mNote.setContent(mNoteEditText.getText().toString());
-
-                // Run the save task
-                mGlassNotesDataStore.saveNote(mNote, new GlassNotesGitHubAPIClient.Promise<Note>() {
+                saveNote(new GlassNotesGitHubAPIClient.Promise<Note>() {
                     @Override
                     public void resolved(Note data) {
                         runOnUiThread(() -> mStatusTextView.setStatus("Saved: " + DateUtilities.nowAs("KK:mm:ss a")));
@@ -118,6 +108,22 @@ public class EditActivity extends Activity {
                 });
             }
         }, 5_000 /* start after 5 seconds */, 5_000 /* run every 5 seconds */);
+    }
+
+    private void saveNote(GlassNotesDataStore.Promise<Note> notePromise) {
+        // Only update the data store if the contents have changed
+        String currentText = mNote.getContent();
+        String updatedText = mNoteEditText.getText().toString();
+        if (currentText.equals(updatedText)) {
+            notePromise.resolved(mNote);
+            return;
+        }
+
+        // Else, it was updated
+        mNote.setContent(mNoteEditText.getText().toString());
+
+        // Run the save task
+        mGlassNotesDataStore.saveNote(mNote, notePromise);
     }
 
     /**
@@ -165,11 +171,10 @@ public class EditActivity extends Activity {
         contents = contents.replaceAll(":x", "");
         mNoteEditText.setText(contents);
 
-        // Update the data model's content
+        // Update the data model's mContent
         mNote.setContent(contents);
 
-        // Save the note to the data store
-        mGlassNotesDataStore.saveNote(mNote, new GlassNotesGitHubAPIClient.Promise<Note>() {
+        saveNote(new GlassNotesGitHubAPIClient.Promise<Note>() {
             @Override
             public void resolved(Note data) {
                 EditActivity.this.finish();

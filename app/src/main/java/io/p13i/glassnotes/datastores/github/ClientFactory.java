@@ -39,12 +39,12 @@ public class ClientFactory {
                     @Override
                     public JsonElement serialize(Gist src, Type typeOfSrc, JsonSerializationContext context) {
                         JsonObject obj = new JsonObject();
-                        obj.addProperty("id", src.id);
+                        obj.addProperty("id", src.mId);
                         obj.add("files", new JsonObject());
-                        for (Map.Entry<String, File> entry : src.files.entrySet()) {
+                        for (Map.Entry<String, File> entry : src.mFiles.entrySet()) {
                             JsonObject fileObj = new JsonObject();
-                            fileObj.addProperty("filename", entry.getValue().filename);
-                            fileObj.addProperty("content", entry.getValue().content);
+                            fileObj.addProperty("filename", entry.getValue().mFilename);
+                            fileObj.addProperty("content", entry.getValue().mContent);
                             obj.getAsJsonObject("files").add(entry.getKey(), fileObj);
                         }
                         return obj;

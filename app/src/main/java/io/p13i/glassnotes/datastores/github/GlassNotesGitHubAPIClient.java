@@ -42,10 +42,7 @@ public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
                 List<Note> notes = new ArrayList<>();
                 List<Gist> gists = response.body();
                 for (Gist gist : gists) {
-                    Note note = gist.asNote();
-                    if (note != null) {
-                        notes.add(note);
-                    }
+                    notes.addAll(gist.asNotes());
                 }
 
                 promise.resolved(notes);
@@ -66,7 +63,7 @@ public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
             public void onResponse(Call<Gist> call, Response<Gist> response) {
                 Gist gist = response.body();
                 File firstFile = gist.getFirstFile();
-                promise.resolved(new Note(gist.id, firstFile.filename, firstFile.content));
+                promise.resolved(new Note(gist.mId, firstFile.mFilename, firstFile.mContent, gist.mCreatedAt, gist.mUpdatedAt));
             }
 
             @Override

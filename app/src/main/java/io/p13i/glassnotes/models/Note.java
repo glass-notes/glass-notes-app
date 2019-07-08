@@ -7,6 +7,7 @@ import java.util.HashMap;
 
 import io.p13i.glassnotes.datastores.github.File;
 import io.p13i.glassnotes.datastores.github.Gist;
+import io.p13i.glassnotes.utilities.DateUtilities;
 
 public class Note implements Serializable {
     public static final String EXTRA_TAG = Note.class.getName();
@@ -18,50 +19,63 @@ public class Note implements Serializable {
     @SerializedName("title")
     String mTitle;
 
-    @SerializedName("content")
+    @SerializedName("mContent")
     String mContent;
 
+    @SerializedName("created_at")
+    String mCreatedAt;
 
-    public Note(String id, String title, String content) {
+    @SerializedName("updated_at")
+    String mUpdatedAt;
+
+    public Note(String title) {
+        this(null, title, DEFAULT_CONTENT, DateUtilities.timestamp(), DateUtilities.timestamp());
+    }
+
+    public Note(String id, String title, String content, String createdAt, String updatedAt) {
         mId = id;
         mTitle = title;
         mContent = content;
+        mCreatedAt = createdAt;
+        mUpdatedAt = updatedAt;
     }
 
     public String getId() {
-        return mId;
+        return this.mId;
     }
 
     public void setId(String id) {
-        mId = id;
+        this.mId = id;
     }
 
     public String getTitle() {
-        return mTitle;
+        return this.mTitle;
     }
 
     public String getContent() {
-        return mContent;
+        return this.mContent;
     }
 
     public void setContent(String contents) {
-        mContent = contents;
+        this.mContent = contents;
     }
 
     public Gist asGist() {
         return new Gist() {{
-            id = mId;
-            files = new HashMap<String, File>() {{
+            mId = Note.this.mId;
+            mFiles = new HashMap<String, File>() {{
                 put(mTitle, new File() {{
-                    filename = mTitle;
-                    content = mContent;
+                    mFilename = Note.this.mTitle;
+                    mContent = Note.this.mContent;
                 }});
             }};
+            mCreatedAt = Note.this.mCreatedAt;
+            mUpdatedAt = Note.this.mUpdatedAt;
         }};
     }
 
     @Override
     public String toString() {
-        return mTitle;
+        return this.mTitle;
     }
 }

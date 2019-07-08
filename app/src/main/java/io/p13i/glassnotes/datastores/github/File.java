@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 public class File implements Serializable {
     @SerializedName("filename")
-    public String filename;
+    public String mFilename;
 
     @SerializedName("size")
     public Integer size;
@@ -15,5 +15,5 @@ public class File implements Serializable {
     public String rawUrl;
 
     @SerializedName("content")
-    public String content;
+    public String mContent;
 }

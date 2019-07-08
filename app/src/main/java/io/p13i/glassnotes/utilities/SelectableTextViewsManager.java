@@ -38,6 +38,26 @@ public class SelectableTextViewsManager {
         mParentViewGroup.addView(view);
     }
 
+    public void removeViewChildAtIndex(int index) {
+        View view = mParentViewGroup.getChildAt(index);
+        if (view instanceof TextView && isManagingView(view)) {
+            mTextViews.remove(indexOfViewInManagedViews(view));
+        }
+        mParentViewGroup.removeViewAt(index);
+    }
+
+    private int indexOfViewInManagedViews(View view) {
+        for (int i = 0; i < mTextViews.size(); i++) {
+            if (view.getId() == mTextViews.get(i).getId()) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private boolean isManagingView(View view) {
+        return indexOfViewInManagedViews(view) > -1;
+    }
 
     public void handleKeypadDpadDown() {
         // Set the next element to underlined
@@ -94,12 +114,14 @@ public class SelectableTextViewsManager {
         textView.setPaintFlags(textView.getPaintFlags() & ~(Paint.UNDERLINE_TEXT_FLAG));
     }
 
-
     private void setSelectedTextView(TextView newSelectedTextView) {
         if (mSelectedTextView != null) {
             removeUnderline(mSelectedTextView);
         }
-        addUnderline(mSelectedTextView = newSelectedTextView);
+
+        // Add the new underline
+        addUnderline(newSelectedTextView);
+        mSelectedTextView = newSelectedTextView;
     }
 
     private TextView getSelectedTextView() {

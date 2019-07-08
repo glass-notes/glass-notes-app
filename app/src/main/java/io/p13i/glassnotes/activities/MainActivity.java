@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -79,7 +80,6 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
             public void resolved(List<Note> data) {
                 mNotes = data;
                 mLimitedViewItemManager = new LimitedViewItemManager<>(mNotes, /* maximumCount: */5);
-                clearNotesFromView();
                 setVisibleNotes();
             }
 
@@ -93,7 +93,7 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
     void clearNotesFromView() {
         // Remove all children after the arrows
         while (mLinearLayout.getChildCount() > 7) {
-            mLinearLayout.removeViewAt(7);
+            mSelectableTextViewsManager.removeViewChildAtIndex(7);
         }
     }
 
@@ -219,7 +219,7 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
     }
 
     void startEditActivityForNewNote(String title) {
-        Note note = new Note(null, title, Note.DEFAULT_CONTENT);
+        Note note = new Note(null, title, Note.DEFAULT_CONTENT, DateUtilities.timestamp(), DateUtilities.timestamp());
         mGlassNotesDataStore.createNote(note, new GlassNotesDataStore.Promise<Note>() {
             @Override
             public void resolved(Note data) {
