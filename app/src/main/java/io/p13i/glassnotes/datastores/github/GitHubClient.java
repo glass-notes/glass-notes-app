@@ -12,7 +12,7 @@ import retrofit2.http.POST;
 import retrofit2.http.Path;
 
 public interface GitHubClient {
-    public static final String AUTHORIZATION_HEADER = "Authorization: token 381108b45267857e315a2df4bcfaf1d9284f34d4";
+    public static final String AUTHORIZATION_HEADER = "Authorization: token bb49398803d7511b43b5cf3123a654ce784b34c0";
 
     @Headers(AUTHORIZATION_HEADER)
     @GET("/gists")

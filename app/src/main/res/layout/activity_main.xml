@@ -15,5 +15,14 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
+        <io.p13i.glassnotes.ui.StatusTextView
+            android:id="@+id/activity_edit_status"
+            android:typeface="monospace"
+            android:textColor="@color/white"
+            android:textSize="4dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
     </LinearLayout>
+
 </android.widget.LinearLayout>

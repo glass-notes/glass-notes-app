@@ -13,7 +13,7 @@ import io.p13i.glassnotes.utilities.DateUtilities;
 @SuppressLint("AppCompatCustomView")
 public class StatusTextView extends TextView {
 
-    String mPageTitle = "";
+    String mPageTitle = "Page Title";
     int mCurrentPageTitleStartingIndex = 0;
     String mStatus = "";
     private Date mPreviousPageTitleUpdateDate = DateUtilities.now()

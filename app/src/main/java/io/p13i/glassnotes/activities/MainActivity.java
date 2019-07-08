@@ -23,6 +23,7 @@ import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.R;
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
 import io.p13i.glassnotes.datastores.github.GlassNotesGitHubAPIClient;
+import io.p13i.glassnotes.ui.StatusTextView;
 import io.p13i.glassnotes.utilities.DateUtilities;
 import io.p13i.glassnotes.utilities.LimitedCountScrollableTextListManager;
 import io.p13i.glassnotes.utilities.SelectableTextViewsManager;
@@ -32,6 +33,9 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
     private final static String TAG = MainActivity.class.getName();
 
     GlassNotesDataStore mGlassNotesDataStore = new GlassNotesGitHubAPIClient();
+
+    @BindView(R.id.activity_edit_status)
+    StatusTextView mStatusTextView;
 
     @BindView(R.id.activity_main_layout)
     LinearLayout mLinearLayout;
@@ -57,6 +61,7 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
 
         reloadNotes();
 
+        mStatusTextView.setPageTitle("Welcome to GlassNotes!");
     }
 
     void reloadNotes() {
@@ -80,8 +85,8 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
 
     void clearNotesFromView() {
         // Remove all children after the arrows
-        while (mLinearLayout.getChildCount() > 6) {
-            mLinearLayout.removeViewAt(6);
+        while (mLinearLayout.getChildCount() > 7) {
+            mLinearLayout.removeViewAt(7);
         }
     }
 
