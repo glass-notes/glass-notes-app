@@ -1,4 +1,4 @@
-package io.p13i.glassnotes.API;
+package io.p13i.glassnotes.datastores.github;
 
 import java.io.IOException;
 import java.net.InetAddress;

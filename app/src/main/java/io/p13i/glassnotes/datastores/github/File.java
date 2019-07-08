@@ -1,4 +1,4 @@
-package io.p13i.glassnotes.API;
+package io.p13i.glassnotes.datastores.github;
 
 import com.google.gson.annotations.SerializedName;
 

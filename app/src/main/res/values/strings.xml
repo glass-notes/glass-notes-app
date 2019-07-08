@@ -2,5 +2,5 @@
     <string name="app_name">GlassNotes</string>
     <string name="create_new_note">Create new note    →</string>
     <string name="add_new_todo">Add new TODO       →</string>
-    <string name="add_existing">Open existing:</string>
+    <string name="add_existing">Current notes: (refresh)</string>
 </resources>

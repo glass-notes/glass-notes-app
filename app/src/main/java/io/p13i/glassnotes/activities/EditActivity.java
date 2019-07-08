@@ -1,9 +1,10 @@
-package io.p13i.glassnotes;
+package io.p13i.glassnotes.activities;
 
 
 import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
@@ -16,22 +17,27 @@ import java.util.TimerTask;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.p13i.glassnotes.API.GlassNotesClient;
+import io.p13i.glassnotes.models.Note;
+import io.p13i.glassnotes.R;
+import io.p13i.glassnotes.datastores.GlassNotesDataStore;
+import io.p13i.glassnotes.datastores.github.GlassNotesGitHubAPIClient;
+import io.p13i.glassnotes.ui.StatusTextView;
+import io.p13i.glassnotes.utilities.DateUtilities;
 import okhttp3.ResponseBody;
 
 public class EditActivity extends Activity {
 
     public final static String TAG = EditActivity.class.getName();
 
+    @BindView(R.id.activity_edit_status)
+    StatusTextView mStatusTextView;
+
     @BindView(R.id.note_edit_text)
     EditText mNoteEditText;
 
-    @BindView(R.id.last_save)
-    TextView mLastSaveTextView;
-
     private Note mNote;
-
     private Timer mSaveTimer;
+    private GlassNotesDataStore mGlassNotesDataStore;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,11 +51,11 @@ public class EditActivity extends Activity {
 
         mNote = (Note) getIntent().getSerializableExtra(Note.EXTRA_TAG);
 
-        MainActivity.setTextViewCommonStyles(this, mLastSaveTextView);
         mNoteEditText.setEnabled(false);
         mNoteEditText.setTextColor(getResources().getColor(R.color.white));
 
-        GlassNotesClient.getNote(mNote.getId(), new GlassNotesClient.Promise<Note>() {
+        mGlassNotesDataStore = new GlassNotesGitHubAPIClient();
+        mGlassNotesDataStore.getNote(mNote.getId(), new GlassNotesGitHubAPIClient.Promise<Note>() {
             @Override
             public void resolved(Note data) {
                 runOnUiThread(new Runnable() {
@@ -57,6 +63,7 @@ public class EditActivity extends Activity {
                     public void run() {
                         mNote = data;
                         mNoteEditText.setText(mNote.getContent());
+                        mNoteEditText.setSelection(mNoteEditText.getText().length());
                         mNoteEditText.setEnabled(true);
                         startSaveTimer();
                     }
@@ -69,8 +76,8 @@ public class EditActivity extends Activity {
             }
         });
 
-
-
+        mStatusTextView.setPageTitle(mNote.getTitle());
+        mStatusTextView.setStatus("Welcome!");
     }
 
     void startSaveTimer() {
@@ -78,7 +85,7 @@ public class EditActivity extends Activity {
         mSaveTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                String currentText = mNote.mContents;
+                String currentText = mNote.getContent();
                 String updatedText = mNoteEditText.getText().toString();
 
                 if (currentText.equals(updatedText)) {
@@ -88,25 +95,74 @@ public class EditActivity extends Activity {
                 // Else, it was updated
                 mNote.setContent(mNoteEditText.getText().toString());
 
-                GlassNotesClient.saveNote(mNote, new GlassNotesClient.Promise<ResponseBody>() {
+                mGlassNotesDataStore.saveNote(mNote, new GlassNotesGitHubAPIClient.Promise<ResponseBody>() {
                     @Override
                     public void resolved(ResponseBody data) {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
-                                String currentDateandTime = sdf.format(new Date());
-                                mLastSaveTextView.setText("Last save: (" + currentDateandTime + ")");
+                                mStatusTextView.setStatus("Saved: " + DateUtilities.nowAs("KK:mm:ss a"));
                             }
                         });
                     }
 
                     @Override
                     public void failed(Throwable t) {
-                        Log.e(TAG, "Failed to fetch getGist.", t);
+                        Log.e(TAG, "Failed to fetch gist.", t);
                     }
                 });
             }
         }, 5_000, 5_000);
+    }
+
+    boolean mSemicolonPressed = false;
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_SEMICOLON) {
+            if (!mSemicolonPressed) {
+                mSemicolonPressed = true;
+            }
+            return true;
+        }
+
+        if (keyCode == KeyEvent.KEYCODE_X) {
+            if (mSemicolonPressed) {
+                saveAndFinish();
+                return true;
+            }
+        }
+
+        mSemicolonPressed = false;
+
+        return super.onKeyUp(keyCode, event);
+    }
+
+    private void saveAndFinish() {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mStatusTextView.setText("Saving/exiting...");
+                mStatusTextView.invalidate();
+            }
+        });
+
+        String contents = mNoteEditText.getText().toString();
+        contents = contents.replaceAll(":x", "");
+        mNoteEditText.setText(contents);
+
+        mNote.setContent(contents);
+
+        mGlassNotesDataStore.saveNote(mNote, new GlassNotesGitHubAPIClient.Promise<ResponseBody>() {
+            @Override
+            public void resolved(ResponseBody data) {
+                EditActivity.this.finish();
+            }
+
+            @Override
+            public void failed(Throwable t) {
+                Log.e(TAG, "Failed to fetch gist.", t);
+            }
+        });
     }
 }

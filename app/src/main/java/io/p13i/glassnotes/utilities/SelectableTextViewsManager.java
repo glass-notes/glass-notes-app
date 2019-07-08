@@ -1,29 +1,26 @@
-package io.p13i.glassnotes;
+package io.p13i.glassnotes.utilities;
 
 import android.graphics.Paint;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import org.w3c.dom.Text;
-
 import java.util.ArrayList;
 import java.util.List;
 
-class SelectableTextViewsManager {
+public class SelectableTextViewsManager {
     private ViewGroup mParentViewGroup;
     private OnTextViewSelectedListener mOnTextViewSelectedListener;
 
     private List<TextView> mTextViews = new ArrayList<>();
 
-    SelectableTextViewsManager(ViewGroup parentViewGroup, SelectableTextViewsManager.OnTextViewSelectedListener onTextViewSelectedListener) {
+    public SelectableTextViewsManager(ViewGroup parentViewGroup, SelectableTextViewsManager.OnTextViewSelectedListener onTextViewSelectedListener) {
         mParentViewGroup = parentViewGroup;
         mOnTextViewSelectedListener = onTextViewSelectedListener;
     }
 
-    void addManagedTextViewChild(TextView textView) {
+    public void addManagedTextViewChild(TextView textView) {
 
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         if (mTextViews.size() > 0) {
@@ -34,7 +31,7 @@ class SelectableTextViewsManager {
         mParentViewGroup.addView(textView);
     }
 
-    void addViewChild(View view) {
+    protected void addViewChild(View view) {
         mParentViewGroup.addView(view);
     }
 
@@ -108,14 +105,14 @@ class SelectableTextViewsManager {
 
     private TextView mSelectedTextView;
 
-    void init() {
+    protected void init() {
         setSelectedTextView(mTextViews.get(0));
         for (int i = 1; i < mTextViews.size(); i++) {
             removeUnderline(mTextViews.get(i));
         }
     }
 
-    interface OnTextViewSelectedListener {
+    public interface OnTextViewSelectedListener {
         void onTextViewSelected(TextView textView);
     }
 }
