@@ -1,5 +1,7 @@
 package io.p13i.glassnotes.models;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.io.Serializable;
 import java.util.HashMap;
 
@@ -10,19 +12,28 @@ public class Note implements Serializable {
     public static final String EXTRA_TAG = Note.class.getName();
     public static final String DEFAULT_CONTENT = "- ";
 
+    @SerializedName("id")
     String mId;
+
+    @SerializedName("title")
     String mTitle;
-    String mContents;
+
+    @SerializedName("content")
+    String mContent;
 
 
-    public Note(String id, String title, String contents) {
+    public Note(String id, String title, String content) {
         mId = id;
         mTitle = title;
-        mContents = contents;
+        mContent = content;
     }
 
     public String getId() {
         return mId;
+    }
+
+    public void setId(String id) {
+        mId = id;
     }
 
     public String getTitle() {
@@ -30,11 +41,11 @@ public class Note implements Serializable {
     }
 
     public String getContent() {
-        return mContents;
+        return mContent;
     }
 
     public void setContent(String contents) {
-        mContents = contents;
+        mContent = contents;
     }
 
     public Gist asGist() {
@@ -43,7 +54,7 @@ public class Note implements Serializable {
             files = new HashMap<String, File>() {{
                 put(mTitle, new File() {{
                     filename = mTitle;
-                    content = mContents;
+                    content = mContent;
                 }});
             }};
         }};

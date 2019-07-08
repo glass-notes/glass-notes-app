@@ -17,11 +17,13 @@ import java.util.TimerTask;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.p13i.glassnotes.datastores.localdisk.LocalDiskGlassNotesDataStore;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.R;
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
 import io.p13i.glassnotes.datastores.github.GlassNotesGitHubAPIClient;
 import io.p13i.glassnotes.ui.StatusTextView;
+import io.p13i.glassnotes.user.Preferences;
 import io.p13i.glassnotes.utilities.DateUtilities;
 import okhttp3.ResponseBody;
 
@@ -54,7 +56,7 @@ public class EditActivity extends Activity {
         mNoteEditText.setEnabled(false);
         mNoteEditText.setTextColor(getResources().getColor(R.color.white));
 
-        mGlassNotesDataStore = new GlassNotesGitHubAPIClient();
+        mGlassNotesDataStore = Preferences.getUserPreferredDataStore(this);
         mGlassNotesDataStore.getNote(mNote.getId(), new GlassNotesGitHubAPIClient.Promise<Note>() {
             @Override
             public void resolved(Note data) {
@@ -95,9 +97,9 @@ public class EditActivity extends Activity {
                 // Else, it was updated
                 mNote.setContent(mNoteEditText.getText().toString());
 
-                mGlassNotesDataStore.saveNote(mNote, new GlassNotesGitHubAPIClient.Promise<ResponseBody>() {
+                mGlassNotesDataStore.saveNote(mNote, new GlassNotesGitHubAPIClient.Promise<Note>() {
                     @Override
-                    public void resolved(ResponseBody data) {
+                    public void resolved(Note data) {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -153,9 +155,9 @@ public class EditActivity extends Activity {
 
         mNote.setContent(contents);
 
-        mGlassNotesDataStore.saveNote(mNote, new GlassNotesGitHubAPIClient.Promise<ResponseBody>() {
+        mGlassNotesDataStore.saveNote(mNote, new GlassNotesGitHubAPIClient.Promise<Note>() {
             @Override
-            public void resolved(ResponseBody data) {
+            public void resolved(Note data) {
                 EditActivity.this.finish();
             }
 

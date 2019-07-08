@@ -10,7 +10,7 @@ public interface GlassNotesDataStore {
     void createNote(Note note, Promise<Note> promise);
     void getNotes(Promise<List<Note>> promise);
     void getNote(String id, Promise<Note> promise);
-    void saveNote(Note note, Promise<ResponseBody> promise);
+    void saveNote(Note note, Promise<Note> promise);
 
     interface Promise<T> {
         void resolved(T data);

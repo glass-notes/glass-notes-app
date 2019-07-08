@@ -19,20 +19,23 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.p13i.glassnotes.datastores.localdisk.LocalDiskGlassNotesDataStore;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.R;
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
 import io.p13i.glassnotes.datastores.github.GlassNotesGitHubAPIClient;
 import io.p13i.glassnotes.ui.StatusTextView;
+import io.p13i.glassnotes.user.Preferences;
 import io.p13i.glassnotes.utilities.DateUtilities;
 import io.p13i.glassnotes.utilities.LimitedCountScrollableTextListManager;
 import io.p13i.glassnotes.utilities.SelectableTextViewsManager;
+
 
 public class MainActivity extends Activity implements SelectableTextViewsManager.OnTextViewSelectedListener {
 
     private final static String TAG = MainActivity.class.getName();
 
-    GlassNotesDataStore mGlassNotesDataStore = new GlassNotesGitHubAPIClient();
+    GlassNotesDataStore mGlassNotesDataStore;
 
     @BindView(R.id.activity_edit_status)
     StatusTextView mStatusTextView;
@@ -54,6 +57,8 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
 
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+
+        mGlassNotesDataStore = Preferences.getUserPreferredDataStore(this);
 
         mLinearLayout.setFocusable(true);
 

@@ -1,5 +1,6 @@
 package io.p13i.glassnotes.datastores.github;
 
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -32,27 +33,31 @@ public class ClientFactory {
         return httpClient;
     }
 
+    public static Gson getGson() {
+        return new GsonBuilder()
+                .registerTypeAdapter(Gist.class, new JsonSerializer<Gist>() {
+                    @Override
+                    public JsonElement serialize(Gist src, Type typeOfSrc, JsonSerializationContext context) {
+                        JsonObject obj = new JsonObject();
+                        obj.addProperty("id", src.id);
+                        obj.add("files", new JsonObject());
+                        for (Map.Entry<String, File> entry : src.files.entrySet()) {
+                            JsonObject fileObj = new JsonObject();
+                            fileObj.addProperty("filename", entry.getValue().filename);
+                            fileObj.addProperty("content", entry.getValue().content);
+                            obj.getAsJsonObject("files").add(entry.getKey(), fileObj);
+                        }
+                        return obj;
+                    }
+                })
+                .create();
+    }
+
     public static GitHubClient getGitHubClient() {
         return new Retrofit.Builder()
                 .baseUrl("https://api.github.com")
                 .client(getOkHttpClient())
-                .addConverterFactory(GsonConverterFactory.create(new GsonBuilder()
-                        .registerTypeAdapter(Gist.class, new JsonSerializer<Gist>() {
-                            @Override
-                            public JsonElement serialize(Gist src, Type typeOfSrc, JsonSerializationContext context) {
-                                JsonObject obj = new JsonObject();
-                                obj.addProperty("id", src.id);
-                                obj.add("files", new JsonObject());
-                                for (Map.Entry<String, File> entry : src.files.entrySet()) {
-                                    JsonObject fileObj = new JsonObject();
-                                    fileObj.addProperty("filename", entry.getValue().filename);
-                                    fileObj.addProperty("content", entry.getValue().content);
-                                    obj.getAsJsonObject("files").add(entry.getKey(), fileObj);
-                                }
-                                return obj;
-                            }
-                        })
-                        .create()))
+                .addConverterFactory(GsonConverterFactory.create(getGson()))
                 .build()
                 .create(GitHubClient.class);
     }

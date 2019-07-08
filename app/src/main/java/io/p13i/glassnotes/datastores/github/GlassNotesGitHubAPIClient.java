@@ -73,17 +73,17 @@ public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
         });
     }
 
-    public void saveNote(Note note, Promise<ResponseBody> promise) {
+    public void saveNote(Note note, Promise<Note> promise) {
         GitHubClient client = ClientFactory.getGitHubClient();
 
-        client.patchGist(note.getId(), note.asGist()).enqueue(new Callback<ResponseBody>() {
+        client.patchGist(note.getId(), note.asGist()).enqueue(new Callback<Note>() {
             @Override
-            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+            public void onResponse(Call<Note> call, Response<Note> response) {
                 promise.resolved(response.body());
             }
 
             @Override
-            public void onFailure(Call<ResponseBody> call, Throwable t) {
+            public void onFailure(Call<Note> call, Throwable t) {
                 promise.failed(t);
             }
         });
