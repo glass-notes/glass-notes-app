@@ -19,7 +19,6 @@
             android:id="@+id/activity_edit_status"
             android:typeface="monospace"
             android:textColor="@color/white"
-            android:textSize="4dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 

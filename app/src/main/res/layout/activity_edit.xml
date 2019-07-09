@@ -16,7 +16,6 @@
             android:id="@+id/activity_edit_status"
             android:typeface="monospace"
             android:textColor="@color/white"
-            android:textSize="4sp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             tools:ignore="SmallSp" />
@@ -30,7 +29,6 @@
             android:padding="2dp"
             android:inputType="textFilter|textMultiLine|textNoSuggestions"
             android:textCursorDrawable="@null"
-            android:textSize="4sp"
             tools:ignore="SmallSp" />
 
     </LinearLayout>

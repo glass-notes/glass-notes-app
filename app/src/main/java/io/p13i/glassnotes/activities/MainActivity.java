@@ -117,7 +117,6 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
     static void setTextViewCommonStyles(Context context, TextView textView) {
         textView.setTextColor(context.getResources().getColor(R.color.white));
         textView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
-        textView.setTextSize(4f);
     }
 
     void populateLayout() {
