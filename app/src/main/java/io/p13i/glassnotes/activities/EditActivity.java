@@ -51,6 +51,8 @@ public class EditActivity extends Activity {
         setContentView(R.layout.activity_edit);
         ButterKnife.bind(this);
 
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         // Get the target Note from the activity transition
         mNote = (Note) getIntent().getSerializableExtra(Note.EXTRA_TAG);
 

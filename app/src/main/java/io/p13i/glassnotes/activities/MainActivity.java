@@ -64,6 +64,8 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         mGlassNotesDataStore = Preferences.getUserPreferredDataStore(this);
 
         mGestureDetector = createGestureDetector(this);
