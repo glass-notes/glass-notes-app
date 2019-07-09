@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -15,6 +16,7 @@ import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.google.android.glass.media.Sounds;
 import com.google.android.glass.touchpad.Gesture;
 import com.google.android.glass.touchpad.GestureDetector;
 
@@ -255,13 +257,22 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
                 if (gesture == Gesture.TAP) {
                     // do something on tap
                     mSelectableTextViewsManager.handleEnter();
+                    playSound(Sounds.SUCCESS);
                     return true;
                 } else if (gesture == Gesture.SWIPE_RIGHT) {
-                    mSelectableTextViewsManager.handleKeypadDpadUp();
+                    if (mSelectableTextViewsManager.handleKeypadDpadUp()) {
+                        playSound(Sounds.TAP);
+                    } else {
+                        playSound(Sounds.ERROR);
+                    }
                     return true;
                 } else if (gesture == Gesture.SWIPE_LEFT) {
                     // do something on left (backwards) swipe
-                    mSelectableTextViewsManager.handleKeypadDpadDown();
+                    if (mSelectableTextViewsManager.handleKeypadDpadDown()) {
+                        playSound(Sounds.TAP);
+                    } else {
+                        playSound(Sounds.ERROR);
+                    }
                     return true;
                 }
                 return false;
@@ -292,5 +303,10 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
             return mGestureDetector.onMotionEvent(event);
         }
         return false;
+    }
+
+    public void playSound(int sound) {
+        AudioManager audio = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
+        audio.playSoundEffect(sound);
     }
 }

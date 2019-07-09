@@ -59,19 +59,25 @@ public class SelectableTextViewsManager {
         return indexOfViewInManagedViews(view) > -1;
     }
 
-    public void handleKeypadDpadDown() {
+    public boolean handleKeypadDpadDown() {
         // Set the next element to underlined
         TextView nextTextView = (TextView) getNextChild(getSelectedTextView());
         if (nextTextView != null) {
             setSelectedTextView(nextTextView);
+            return true;
+        } else {
+            return false;
         }
     }
 
-    public void handleKeypadDpadUp() {
+    public boolean handleKeypadDpadUp() {
         // Set the next element to underlined
         TextView previousTextView = (TextView) getPreviousChild(getSelectedTextView());
         if (previousTextView != null) {
             setSelectedTextView(previousTextView);
+            return true;
+        } else {
+            return false;
         }
     }
 
