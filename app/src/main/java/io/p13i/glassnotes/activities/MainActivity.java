@@ -8,11 +8,15 @@ import android.os.Bundle;
 import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import com.google.android.glass.touchpad.Gesture;
+import com.google.android.glass.touchpad.GestureDetector;
 
 import java.util.Date;
 import java.util.List;
@@ -40,6 +44,8 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
     @BindView(R.id.activity_main_layout)
     LinearLayout mLinearLayout;
 
+    GestureDetector mGestureDetector;
+
     SelectableTextViewsManager mSelectableTextViewsManager;
     GlassNotesDataStore mGlassNotesDataStore;
     LimitedViewItemManager<Note> mLimitedViewItemManager;
@@ -57,6 +63,8 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
         ButterKnife.bind(this);
 
         mGlassNotesDataStore = Preferences.getUserPreferredDataStore(this);
+
+        mGestureDetector = createGestureDetector(this);
 
         // So that keyboard entry will be registered
         mLinearLayout.setFocusable(true);
@@ -236,5 +244,53 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
         Intent intent = new Intent(this, EditActivity.class);
         intent.putExtra(Note.EXTRA_TAG, note);
         startActivity(intent);
+    }
+
+    private GestureDetector createGestureDetector(Context context) {
+        GestureDetector gestureDetector = new GestureDetector(context);
+        //Create a base listener for generic gestures
+        gestureDetector.setBaseListener( new GestureDetector.BaseListener() {
+            @Override
+            public boolean onGesture(Gesture gesture) {
+                if (gesture == Gesture.TAP) {
+                    // do something on tap
+                    mSelectableTextViewsManager.handleEnter();
+                    return true;
+                } else if (gesture == Gesture.SWIPE_RIGHT) {
+                    mSelectableTextViewsManager.handleKeypadDpadUp();
+                    return true;
+                } else if (gesture == Gesture.SWIPE_LEFT) {
+                    // do something on left (backwards) swipe
+                    mSelectableTextViewsManager.handleKeypadDpadDown();
+                    return true;
+                }
+                return false;
+            }
+        });
+        gestureDetector.setFingerListener(new GestureDetector.FingerListener() {
+            @Override
+            public void onFingerCountChanged(int previousCount, int currentCount) {
+                // do something on finger count changes
+            }
+        });
+        gestureDetector.setScrollListener(new GestureDetector.ScrollListener() {
+            @Override
+            public boolean onScroll(float displacement, float delta, float velocity) {
+                // do something on scrolling
+                return true;
+            }
+        });
+        return gestureDetector;
+    }
+
+    /*
+     * Send generic motion events to the gesture detector
+     */
+    @Override
+    public boolean onGenericMotionEvent(MotionEvent event) {
+        if (mGestureDetector != null) {
+            return mGestureDetector.onMotionEvent(event);
+        }
+        return false;
     }
 }
