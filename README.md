@@ -1,5 +1,9 @@
 # glass-notes-app
 
+## Demo
+
+[![Glass Notes demo YouTube video](https://img.youtube.com/vi/X09_pJ8Hj90/0.jpg)](https://www.youtube.com/watch?v=X09_pJ8Hj90)
+
 ## Installation 
 
 1. `git clone https://github.com/glass-notes/glass-notes-app.git`
