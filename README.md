@@ -28,6 +28,11 @@ public class Preferences {
     public final static String GITHUB_OAUTH_AUTH_HEADER = "Authorization: token <INSERT GITHUB TOKEN HERE>";
 
     /**
+     * How often to save notes to the specified data store, in milliseconds
+     */
+    public final static int SAVE_PERIOD_MS = 10_000;  // every 10 seconds
+
+    /**
      * Set as LocalDiskGlassNotesDataStore or GlassNotesGitHubAPIClient
      * @param context
      * @return
