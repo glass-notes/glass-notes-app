@@ -23,10 +23,8 @@ import com.google.android.glass.touchpad.GestureDetector;
 import java.util.Date;
 import java.util.List;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.R;
+import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
 import io.p13i.glassnotes.datastores.github.GlassNotesGitHubAPIClient;
 import io.p13i.glassnotes.ui.StatusTextView;
@@ -40,10 +38,8 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
 
     private final static String TAG = MainActivity.class.getName();
 
-    @BindView(R.id.activity_edit_status)
     StatusTextView mStatusTextView;
 
-    @BindView(R.id.activity_main_layout)
     LinearLayout mLinearLayout;
 
     GestureDetector mGestureDetector;
@@ -62,7 +58,9 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
+        mStatusTextView = (StatusTextView) findViewById(R.id.activity_edit_status);
+        mLinearLayout = (LinearLayout) findViewById(R.id.activity_main_layout);
+
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -91,7 +89,7 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
             @Override
             public void resolved(List<Note> data) {
                 mNotes = data;
-                mLimitedViewItemManager = new LimitedViewItemManager<>(mNotes, /* maximumCount: */5);
+                mLimitedViewItemManager = new LimitedViewItemManager<Note>(mNotes, /* maximumCount: */5);
                 setVisibleNotes();
             }
 
@@ -112,7 +110,7 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
     void setVisibleNotes() {
         // Populate again
         List<Note> visibleNotes = mLimitedViewItemManager.getVisibleItems();
-        for (Note note : visibleNotes) {
+        for (final Note note : visibleNotes) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {

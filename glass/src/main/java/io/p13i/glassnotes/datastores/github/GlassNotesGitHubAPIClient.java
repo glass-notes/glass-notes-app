@@ -18,7 +18,7 @@ public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
     }
 
     @Override
-    public void createNote(Note note, Promise<Note> promise) {
+    public void createNote(Note note, final Promise<Note> promise) {
         ClientFactory.getGitHubClient().postGist(note.asGist()).enqueue(new Callback<Gist>() {
             @Override
             public void onResponse(Call<Gist> call, Response<Gist> response) {
@@ -34,12 +34,12 @@ public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
 
     }
 
-    public void getNotes(Promise<List<Note>> promise) {
+    public void getNotes(final Promise<List<Note>> promise) {
         GitHubClient client = ClientFactory.getGitHubClient();
         client.getGists().enqueue(new Callback<List<Gist>>() {
             @Override
             public void onResponse(Call<List<Gist>> call, Response<List<Gist>> response) {
-                List<Note> notes = new ArrayList<>();
+                List<Note> notes = new ArrayList<Note>();
                 List<Gist> gists = response.body();
                 for (Gist gist : gists) {
                     notes.addAll(gist.asNotes());
@@ -56,7 +56,7 @@ public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
 
     }
 
-    public void getNote(String id, Promise<Note> promise) {
+    public void getNote(String id, final Promise<Note> promise) {
         GitHubClient client = ClientFactory.getGitHubClient();
         client.getGist(id).enqueue(new Callback<Gist>() {
             @Override
@@ -73,7 +73,7 @@ public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
         });
     }
 
-    public void saveNote(Note note, Promise<Note> promise) {
+    public void saveNote(Note note, final Promise<Note> promise) {
         GitHubClient client = ClientFactory.getGitHubClient();
 
         client.patchGist(note.getId(), note.asGist()).enqueue(new Callback<Note>() {

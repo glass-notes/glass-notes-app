@@ -1,4 +1,11 @@
 <resources>
-    <string name="app_name">Google Glass Template App</string>
-    <string name="title_activity_glass_main">Main Activity Title</string>
+    <string name="title_activity_glass_main">Main</string>
+    <string name="app_name">GlassNotes</string>
+    <string name="create_new_note">Create new note    →</string>
+    <string name="add_new_todo">Add new TODO       →</string>
+    <string name="add_existing">Current notes: (refresh)</string>
+    <string name="activity_edit_loading">Loading...</string>
+    <string name="activity_edit_saving_existing">Saving/exiting...</string>
+    <string name="error_failed_to_save_note">Failed to save gist.</string>
+    <string name="error_failed_to_get_note">Failed to fetch gist.</string>
 </resources>

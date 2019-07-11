@@ -108,7 +108,7 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore {
     public void getNotes(Promise<List<Note>> promise) {
         Gson gson = ClientFactory.getGson();
 
-        List<Note> notes = new ArrayList<>();
+        List<Note> notes = new ArrayList<Note>();
         File[] files = getStorageDirectory().listFiles();
         for (File noteFile : files) {
             notes.add(gson.fromJson(read(noteFile), Note.class));

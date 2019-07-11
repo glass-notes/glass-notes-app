@@ -20,7 +20,7 @@ public class Gist implements Serializable {
     public Map<String, File> mFiles;
 
     public File getFirstFile() {
-        List<String> filenames = new ArrayList<>(mFiles.keySet());
+        List<String> filenames = new ArrayList<String>(mFiles.keySet());
         return mFiles.get(filenames.get(0));
     }
 
@@ -33,7 +33,7 @@ public class Gist implements Serializable {
     }
 
     public List<Note> asNotes() {
-        List<Note> notes = new ArrayList<>();
+        List<Note> notes = new ArrayList<Note>();
         for (Map.Entry<String, File> kv : mFiles.entrySet()) {
             notes.add(new Note(mId, kv.getValue().mFilename, kv.getValue().mContent, mCreatedAt, mUpdatedAt));
         }

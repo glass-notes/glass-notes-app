@@ -12,10 +12,8 @@ import android.widget.EditText;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.R;
+import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
 import io.p13i.glassnotes.datastores.github.GlassNotesGitHubAPIClient;
 import io.p13i.glassnotes.ui.StatusTextView;
@@ -30,10 +28,8 @@ public class EditActivity extends Activity {
 
     public final static String TAG = EditActivity.class.getName();
 
-    @BindView(R.id.activity_edit_status)
     StatusTextView mStatusTextView;
 
-    @BindView(R.id.note_edit_text)
     EditText mNoteEditText;
 
     private Note mNote;
@@ -49,7 +45,8 @@ public class EditActivity extends Activity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_edit);
-        ButterKnife.bind(this);
+        mStatusTextView = (StatusTextView) findViewById(R.id.activity_edit_status);
+        mNoteEditText = (EditText) findViewById(R.id.note_edit_text);
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -65,16 +62,19 @@ public class EditActivity extends Activity {
         mGlassNotesDataStore = Preferences.getUserPreferredDataStore(this);
         mGlassNotesDataStore.getNote(mNote.getId(), new GlassNotesGitHubAPIClient.Promise<Note>() {
             @Override
-            public void resolved(Note data) {
-                runOnUiThread(() -> {
-                    mNote = data;
-                    mNoteEditText.setText(mNote.getContent());
-                    // Scroll to the end of the file
-                    mNoteEditText.setSelection(mNoteEditText.getText().length());
-                    // Allow editing
-                    mNoteEditText.setEnabled(true);
-                    // Save on an interval
-                    startSaveTimer();
+            public void resolved(final Note data) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mNote = data;
+                        mNoteEditText.setText(mNote.getContent());
+                        // Scroll to the end of the file
+                        mNoteEditText.setSelection(mNoteEditText.getText().length());
+                        // Allow editing
+                        mNoteEditText.setEnabled(true);
+                        // Save on an interval
+                        startSaveTimer();
+                    }
                 });
             }
 
@@ -143,9 +143,12 @@ public class EditActivity extends Activity {
      */
     private void saveAndFinish() {
         // Update the UI
-        runOnUiThread(() -> {
-            mStatusTextView.setText(R.string.activity_edit_saving_existing);
-            mStatusTextView.invalidate();   // forces update
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mStatusTextView.setText(R.string.activity_edit_saving_existing);
+                mStatusTextView.invalidate();   // forces update
+            }
         });
 
         // Clear the timer
@@ -183,7 +186,12 @@ public class EditActivity extends Activity {
             saveNote(new GlassNotesGitHubAPIClient.Promise<Note>() {
                 @Override
                 public void resolved(Note data) {
-                    runOnUiThread(() -> mStatusTextView.setStatus("Saved: " + DateUtilities.nowAs("KK:mm:ss a")));
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            mStatusTextView.setStatus("Saved: " + DateUtilities.nowAs("KK:mm:ss a"));
+                        }
+                    });
                 }
 
                 @Override
