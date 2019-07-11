@@ -9,8 +9,6 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/glass" />
-            <option value="$PROJECT_DIR$/mobile" />
-            <option value="$PROJECT_DIR$/rfid_lib" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />
