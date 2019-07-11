@@ -3,6 +3,7 @@ package io.p13i.glassnotes.ui;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.widget.TextView;
 
@@ -39,6 +40,8 @@ public class StatusTextView extends TextView {
 
         // EEE, MMM dd, yyyy @
         String now = DateUtilities.nowAs("KK:mm:ss a");
+        setTypeface(Typeface.MONOSPACE);
+        setTextSize(16f);
 
         setText(getShortPageTitle(mCurrentPageTitleStartingIndex) + " | " + now + " | " + mStatus);
 

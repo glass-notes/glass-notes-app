@@ -12,6 +12,12 @@ import retrofit2.Response;
 public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
     public static final String TAG = GlassNotesGitHubAPIClient.class.getName();
 
+    GitHubClient mGitHubClient;
+
+    public GlassNotesGitHubAPIClient(String authorizationTokenValue) {
+        mGitHubClient = ClientFactory.getGitHubClient( authorizationTokenValue);
+    }
+
     @Override
     public String getShortName() {
         return "GitHub";
@@ -19,7 +25,7 @@ public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
 
     @Override
     public void createNote(Note note, final Promise<Note> promise) {
-        ClientFactory.getGitHubClient().postGist(note.asGist()).enqueue(new Callback<Gist>() {
+        mGitHubClient.postGist(note.asGist()).enqueue(new Callback<Gist>() {
             @Override
             public void onResponse(Call<Gist> call, Response<Gist> response) {
                 Gist gist = response.body();
@@ -35,8 +41,7 @@ public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
     }
 
     public void getNotes(final Promise<List<Note>> promise) {
-        GitHubClient client = ClientFactory.getGitHubClient();
-        client.getGists().enqueue(new Callback<List<Gist>>() {
+        mGitHubClient.getGists().enqueue(new Callback<List<Gist>>() {
             @Override
             public void onResponse(Call<List<Gist>> call, Response<List<Gist>> response) {
                 List<Note> notes = new ArrayList<Note>();
@@ -57,8 +62,7 @@ public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
     }
 
     public void getNote(String id, final Promise<Note> promise) {
-        GitHubClient client = ClientFactory.getGitHubClient();
-        client.getGist(id).enqueue(new Callback<Gist>() {
+        mGitHubClient.getGist(id).enqueue(new Callback<Gist>() {
             @Override
             public void onResponse(Call<Gist> call, Response<Gist> response) {
                 Gist gist = response.body();
@@ -74,9 +78,7 @@ public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
     }
 
     public void saveNote(Note note, final Promise<Note> promise) {
-        GitHubClient client = ClientFactory.getGitHubClient();
-
-        client.patchGist(note.getId(), note.asGist()).enqueue(new Callback<Note>() {
+        mGitHubClient.patchGist(note.getId(), note.asGist()).enqueue(new Callback<Note>() {
             @Override
             public void onResponse(Call<Note> call, Response<Note> response) {
                 promise.resolved(response.body());
