@@ -31,6 +31,7 @@ public class EditActivity extends Activity {
     StatusTextView mStatusTextView;
 
     EditText mNoteEditText;
+    EditText mCommandLineEditText;
 
     private Note mNote;
     private Timer mSaveTimer;
@@ -47,6 +48,7 @@ public class EditActivity extends Activity {
         setContentView(R.layout.activity_edit);
         mStatusTextView = (StatusTextView) findViewById(R.id.activity_edit_status);
         mNoteEditText = (EditText) findViewById(R.id.note_edit_text);
+        mCommandLineEditText = (EditText) findViewById(R.id.activity_edit_command_line);
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -122,6 +124,17 @@ public class EditActivity extends Activity {
         if (keyCode == KeyEvent.KEYCODE_SEMICOLON) {
             if (!mSemicolonPressed) {
                 mSemicolonPressed = true;
+                mNoteEditText.clearFocus();
+                mCommandLineEditText.requestFocus();
+                mCommandLineEditText.setText(":");
+                mCommandLineEditText.setSelection(1);
+
+                // Remove : from other edit text
+                int cursorPosition = mNoteEditText.getSelectionStart();
+                mNoteEditText.getText().delete(cursorPosition - 1, cursorPosition);
+
+
+                return false;
             }
             return true;
         }
