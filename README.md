@@ -23,14 +23,9 @@ import io.p13i.glassnotes.datastores.localdisk.LocalDiskGlassNotesDataStore;
 
 public class Preferences {
     /**
-     * Get and set your oauth token here...
-     */
-    public final static String GITHUB_OAUTH_AUTH_HEADER = "Authorization: token <INSERT GITHUB TOKEN HERE>";
-
-    /**
      * How often to save notes to the specified data store, in milliseconds
      */
-    public final static int SAVE_PERIOD_MS = 10_000;  // every 10 seconds
+    public final static int SAVE_PERIOD_MS = 5000;  // every 5 seconds
 
     /**
      * Set as LocalDiskGlassNotesDataStore or GlassNotesGitHubAPIClient
@@ -39,8 +34,10 @@ public class Preferences {
      */
     public static GlassNotesDataStore getUserPreferredDataStore(Context context) {
         return new LocalDiskGlassNotesDataStore(context);
-//        return new GlassNotesGitHubAPIClient();
+//        return new GlassNotesGitHubAPIClient("<<<INSERT GITHUB TOKEN FOR GIST ACCESS HERE>>>");
     }
 }
+
+
 ```
 5. Deploy to your device
