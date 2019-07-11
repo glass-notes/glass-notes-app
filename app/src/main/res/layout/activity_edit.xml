@@ -12,7 +12,7 @@
         android:layout_height="match_parent"
         android:orientation="vertical">
 
-        <io.p13i.glassnotes.ui.StatusTextView
+        <io.p13i.glassnotes.io.p13i.glassnotes.ui.StatusTextView
             android:id="@+id/activity_edit_status"
             android:typeface="monospace"
             android:textColor="@color/white"
