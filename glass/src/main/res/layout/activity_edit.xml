@@ -33,7 +33,7 @@
             android:layout_weight="10"
             android:typeface="monospace"
             android:textColor="@color/white"
-            android:textSize="12sp"
+            android:textSize="16sp"
             android:textCursorDrawable="@null"
             tools:ignore="SmallSp"
             android:layout_height="0dp" />
