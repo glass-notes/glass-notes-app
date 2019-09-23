@@ -41,7 +41,7 @@ public class StatusTextView extends TextView {
         // EEE, MMM dd, yyyy @
         String now = DateUtilities.nowAs("KK:mm:ss a");
         setTypeface(Typeface.MONOSPACE);
-        setTextSize(16f);
+        setTextSize(14f);
 
         setText(getShortPageTitle(mCurrentPageTitleStartingIndex) + " | " + now + " | " + mStatus);
 
