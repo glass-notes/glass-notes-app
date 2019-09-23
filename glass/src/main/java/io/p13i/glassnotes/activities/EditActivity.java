@@ -31,7 +31,6 @@ public class EditActivity extends Activity {
     StatusTextView mStatusTextView;
 
     EditText mNoteEditText;
-    EditText mCommandLineEditText;
 
     private Note mNote;
     private Timer mSaveTimer;
@@ -48,7 +47,6 @@ public class EditActivity extends Activity {
         setContentView(R.layout.activity_edit);
         mStatusTextView = (StatusTextView) findViewById(R.id.activity_edit_status);
         mNoteEditText = (EditText) findViewById(R.id.note_edit_text);
-        mCommandLineEditText = (EditText) findViewById(R.id.activity_edit_command_line);
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
@@ -115,38 +113,14 @@ public class EditActivity extends Activity {
         mGlassNotesDataStore.saveNote(mNote, notePromise);
     }
 
-    /**
-     * Use this to track special key code entries like ":x"
-     */
-    boolean mSemicolonPressed = false;
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_SEMICOLON) {
-            if (!mSemicolonPressed) {
-                mSemicolonPressed = true;
-                mNoteEditText.clearFocus();
-                mCommandLineEditText.requestFocus();
-                mCommandLineEditText.setText(":");
-                mCommandLineEditText.setSelection(1);
-
-                // Remove : from other edit text
-                int cursorPosition = mNoteEditText.getSelectionStart();
-                mNoteEditText.getText().delete(cursorPosition - 1, cursorPosition);
-
-
-                return false;
-            }
-            return true;
-        }
-
-        if (keyCode == KeyEvent.KEYCODE_X) {
-            if (mSemicolonPressed) {
+        if (event.isCtrlPressed()) {
+            if (keyCode == KeyEvent.KEYCODE_S) {
                 saveAndFinish();
                 return true;
             }
         }
-
-        mSemicolonPressed = false;
 
         return super.onKeyUp(keyCode, event);
     }
@@ -169,10 +143,7 @@ public class EditActivity extends Activity {
         mSaveTimer.purge();
         mSaveTimer = null;
 
-        // Remove instances of ':x'
         String contents = mNoteEditText.getText().toString();
-        contents = contents.replaceAll(":x", "");
-        mNoteEditText.setText(contents);
 
         // Update the data model's mContent
         mNote.setContent(contents);

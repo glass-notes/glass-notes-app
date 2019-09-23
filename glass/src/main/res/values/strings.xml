@@ -8,6 +8,4 @@
     <string name="activity_edit_saving_existing">Saving/exiting...</string>
     <string name="error_failed_to_save_note">Failed to save gist.</string>
     <string name="error_failed_to_get_note">Failed to fetch gist.</string>
-    <string name="activity_edit_command_line_$">$</string>
-    <string name="activity_edit_command_line_hint">Press : for vim-like commands</string>
 </resources>
