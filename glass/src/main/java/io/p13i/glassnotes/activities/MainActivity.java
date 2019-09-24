@@ -39,11 +39,8 @@ public class MainActivity extends GlassNotesActivity implements
     private final static String TAG = MainActivity.class.getName();
 
     StatusTextView mStatusTextView;
-
     LinearLayout mLinearLayout;
-
     GestureDetector mGestureDetector;
-
     SelectableTextViewsManager mSelectableTextViewsManager;
     GlassNotesDataStore mGlassNotesDataStore;
     LimitedViewItemManager<Note> mLimitedViewItemManager;
@@ -57,11 +54,12 @@ public class MainActivity extends GlassNotesActivity implements
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
+        // Bind to views
         setContentView(R.layout.activity_main);
         mStatusTextView = (StatusTextView) findViewById(R.id.activity_edit_status);
         mLinearLayout = (LinearLayout) findViewById(R.id.activity_main_layout);
 
-
+        // Key the screen on
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mGlassNotesDataStore = Preferences.getUserPreferredDataStore(this);
@@ -77,11 +75,9 @@ public class MainActivity extends GlassNotesActivity implements
         // Fetch from the data store and load into the UI
         reloadNotes();
 
-        // Set status elemeents
+        // Set status elements
         mStatusTextView.setPageTitle("Welcome to GlassNotes!");
         mStatusTextView.setStatus(mGlassNotesDataStore.getShortName());
-
-
     }
 
     void reloadNotes() {
