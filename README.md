@@ -30,8 +30,8 @@
 
 ### Main Activity
 
-* Navigate up by swiping forward on the Glass touch pad or pressing `a` on the connected keyboard.
-* Navigate down by swiping back on the Glass touch pad or pressing `d` on the connected keyboard.
+* Navigate down by swiping forward on the Glass touch pad or pressing `d` on the connected keyboard.
+* Navigate up by swiping back on the Glass touch pad or pressing `a` on the connected keyboard.
 * Select an underlined item by tapping on the Glass touch page or pressing Enter on the connected keyboard.
 * Load settings from the QR (specified in *Installation*) by tapping on `Load settings →` or pressing `ctrl` and `t` on your keyboard.
 

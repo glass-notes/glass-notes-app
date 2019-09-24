@@ -17,7 +17,7 @@ import io.p13i.glassnotes.utilities.DateUtilities;
 
 public class GitHubRepoDataStore implements GlassNotesDataStore<GitHubRepoNote> {
     private static final String TAG = GitHubRepoDataStore.class.getName();
-    private IOException mConstructorException;
+    private Throwable mConstructorException;
 
     private GitHub mGitHub;
     private GHRepository mRepo;
@@ -27,7 +27,7 @@ public class GitHubRepoDataStore implements GlassNotesDataStore<GitHubRepoNote> 
         try {
             this.mGitHub = GitHub.connectUsingOAuth(githubToken);
             this.mRepo = mGitHub.getRepository(mOwnerAndRepo);
-        } catch (IOException e) {
+        } catch (Exception e) {
             Log.e(TAG, "Failed to connectUsingOAuth or getRepository", e);
             this.mGitHub = null;
             this.mRepo = null;
@@ -66,6 +66,7 @@ public class GitHubRepoDataStore implements GlassNotesDataStore<GitHubRepoNote> 
     public void getNotes(Promise<List<Note>> promise) {
         if (this.mRepo == null) {
             promise.rejected(mConstructorException);
+            return;
         }
 
         try {
@@ -87,6 +88,7 @@ public class GitHubRepoDataStore implements GlassNotesDataStore<GitHubRepoNote> 
     public void getNote(String path, Promise<Note> promise) {
         if (this.mRepo == null) {
             promise.rejected(mConstructorException);
+            return;
         }
 
         try {
@@ -107,6 +109,9 @@ public class GitHubRepoDataStore implements GlassNotesDataStore<GitHubRepoNote> 
                 .getContent();
             promise.resolved(new GitHubRepoNote(content));
         } catch (IOException e) {
+            promise.rejected(e);
+        } catch (ClassCastException e) {
+            Log.e(TAG, "Failed to cast to class " + GitHubRepoNote.class.getSimpleName(), e);
             promise.rejected(e);
         }
     }

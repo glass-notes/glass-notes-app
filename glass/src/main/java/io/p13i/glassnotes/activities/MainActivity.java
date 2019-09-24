@@ -381,7 +381,7 @@ public class MainActivity extends GlassNotesActivity implements
                         mSelectableTextViewsManager.handleEnter();
                         playSound(Sounds.SUCCESS);
                         return true;
-                    } else if (gesture == Gesture.SWIPE_RIGHT) {
+                    } else if (gesture == Gesture.SWIPE_LEFT) {
                         if (mSelectableTextViewsManager.handleUpRequest()) {
                             playSound(Sounds.TAP);
                             return true;
@@ -389,7 +389,7 @@ public class MainActivity extends GlassNotesActivity implements
                             playSound(Sounds.ERROR);
                             return false;
                         }
-                    } else if (gesture == Gesture.SWIPE_LEFT) {
+                    } else if (gesture == Gesture.SWIPE_RIGHT) {
                         // do something on left (backwards) swipe
                         if (mSelectableTextViewsManager.handleDownRequest()) {
                             playSound(Sounds.TAP);

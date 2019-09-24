@@ -144,6 +144,7 @@ public class PreferenceManager {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(SHARED_PREFERENCES_KEY, serializedPreferences);
         editor.apply();
+        editor.commit();
     }
 
     /**
