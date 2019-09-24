@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.graphics.Typeface;
 import android.media.AudioManager;
 import android.os.Bundle;
-import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -23,6 +22,8 @@ import com.google.android.glass.touchpad.GestureDetector;
 import java.util.Date;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import io.p13i.glassnotes.R;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
@@ -34,19 +35,44 @@ import io.p13i.glassnotes.utilities.LimitedViewItemManager;
 import io.p13i.glassnotes.utilities.SelectableTextViewsManager;
 
 
-public class MainActivity extends Activity implements SelectableTextViewsManager.OnTextViewSelectedListener {
+public class MainActivity extends GlassNotesActivity implements
+        SelectableTextViewsManager.OnTextViewSelectedListener {
 
     private final static String TAG = MainActivity.class.getName();
 
-    StatusTextView mStatusTextView;
+    /**
+     * The maximum visible notes on the screen
+     */
+    private static final int MAX_VISIBLE_NOTES = 5;
 
+    @BindView(R.id.activity_edit_status)
+    StatusTextView mStatusTextView;
+    @BindView(R.id.activity_main_layout)
     LinearLayout mLinearLayout;
 
+    /**
+     * Used to handle swipe gestures
+     */
     GestureDetector mGestureDetector;
 
+    /**
+     * Manages the select-ability of the text views in the terminal-like GUI
+     */
     SelectableTextViewsManager mSelectableTextViewsManager;
+
+    /**
+     * The data-store of choice
+     */
     GlassNotesDataStore mGlassNotesDataStore;
+
+    /**
+     * Manages the limited view window of notes visible in the GUI
+     */
     LimitedViewItemManager<Note> mLimitedViewItemManager;
+
+    /**
+     * All the notes in this data-store
+     */
     List<Note> mNotes;
 
     @Override
@@ -57,11 +83,11 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
+        // Bind to views
         setContentView(R.layout.activity_main);
-        mStatusTextView = (StatusTextView) findViewById(R.id.activity_edit_status);
-        mLinearLayout = (LinearLayout) findViewById(R.id.activity_main_layout);
+        ButterKnife.bind(this);
 
-
+        // Key the screen on
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mGlassNotesDataStore = Preferences.getUserPreferredDataStore(this);
@@ -70,6 +96,7 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
 
         // So that keyboard entry will be registered
         mLinearLayout.setFocusable(true);
+        mLinearLayout.requestFocus();
 
         // Add views
         populateLayout();
@@ -77,59 +104,15 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
         // Fetch from the data store and load into the UI
         reloadNotes();
 
-        // Set status elemeents
+        // Set status elements
         mStatusTextView.setPageTitle("Welcome to GlassNotes!");
         mStatusTextView.setStatus(mGlassNotesDataStore.getShortName());
     }
 
-    void reloadNotes() {
-        clearNotesFromView();
-
-        mGlassNotesDataStore.getNotes(new GlassNotesGitHubAPIClient.Promise<List<Note>>() {
-            @Override
-            public void resolved(List<Note> data) {
-                mNotes = data;
-                mLimitedViewItemManager = new LimitedViewItemManager<Note>(mNotes, /* maximumCount: */5);
-                setVisibleNotes();
-            }
-
-            @Override
-            public void rejected(Throwable t) {
-                Log.e(TAG, "Failed to get notes.", t);
-            }
-        });
-    }
-
-    void clearNotesFromView() {
-        // Remove all children after the arrows
-        while (mLinearLayout.getChildCount() > 7) {
-            mSelectableTextViewsManager.removeViewChildAtIndex(7);
-        }
-    }
-
-    void setVisibleNotes() {
-        // Populate again
-        List<Note> visibleNotes = mLimitedViewItemManager.getVisibleItems();
-        for (final Note note : visibleNotes) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mSelectableTextViewsManager.addManagedTextViewChild(new TextView(MainActivity.this) {{
-                        setId(View.generateViewId());
-                        setText(note.getTitle());
-                        setTextViewCommonStyles(MainActivity.this, this);
-                    }});
-                }
-            });
-        }
-    }
-
-    static void setTextViewCommonStyles(Context context, TextView textView) {
-        textView.setTextColor(context.getResources().getColor(R.color.white));
-        textView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
-    }
-
-    void populateLayout() {
+    /**
+     * Adds elements to the GUI
+     */
+    private void populateLayout() {
         // Add the controls
         mSelectableTextViewsManager = new SelectableTextViewsManager(mLinearLayout, this) {{
             addManagedTextViewChild(new TextView(MainActivity.this) {{
@@ -170,27 +153,114 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
 
             init();
         }};
-
     }
+
+    /**
+     * Reloads all notes from the data store
+     */
+    private void reloadNotes() {
+        clearNotesFromView();
+
+        // Get the notes from the data store
+        mGlassNotesDataStore.getNotes(new GlassNotesGitHubAPIClient.Promise<List<Note>>() {
+            @Override
+            public void resolved(List<Note> data) {
+                mNotes = data;
+                // Display the notes in the GUI
+                mLimitedViewItemManager = new LimitedViewItemManager<Note>(mNotes,
+                        /* maximumCount: */MAX_VISIBLE_NOTES);
+                setVisibleNotes();
+            }
+
+            @Override
+            public void rejected(Throwable t) {
+                Log.e(TAG, "Failed to get notes.", t);
+            }
+        });
+    }
+
+    /**
+     * Removes all the notes from the view after the arrow selectors
+     */
+    private void clearNotesFromView() {
+        final int INDEX_AFTER_ARROWS = 7;
+        // Remove all children after the arrows
+        while (mLinearLayout.getChildCount() > INDEX_AFTER_ARROWS) {
+            mSelectableTextViewsManager.removeViewChildAtIndex(INDEX_AFTER_ARROWS);
+        }
+    }
+
+    /**
+     * Adds the visible notes back into the GUI
+     */
+    private void setVisibleNotes() {
+        // Populate again
+        List<Note> visibleNotes = mLimitedViewItemManager.getVisibleItems();
+        for (final Note note : visibleNotes) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mSelectableTextViewsManager.addManagedTextViewChild(new TextView(MainActivity.this) {{
+                        setId(View.generateViewId());
+                        setText(note.getTitle());
+                        setTextViewCommonStyles(MainActivity.this, this);
+                    }});
+                }
+            });
+        }
+    }
+
+    /**
+     * Sets the terminal-like style for a text view
+     * @param context the activity context
+     * @param textView the text view to update styles for
+     */
+    private static void setTextViewCommonStyles(Context context, TextView textView) {
+        textView.setTextColor(context.getResources().getColor(R.color.white));
+        textView.setTypeface(Typeface.create("monospace", Typeface.NORMAL));
+    }
+
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         switch (keyCode) {
+            case KeyEvent.KEYCODE_D:
             case KeyEvent.KEYCODE_DPAD_DOWN:
-                mSelectableTextViewsManager.handleKeypadDpadDown();
-                return true;
+                if (mSelectableTextViewsManager.handleDownRequest()) {
+                    playSound(Sounds.TAP);
+                    return true;
+                } else {
+                    playSound(Sounds.ERROR);
+                    return false;
+                }
+            case KeyEvent.KEYCODE_A:
             case KeyEvent.KEYCODE_DPAD_UP:
-                mSelectableTextViewsManager.handleKeypadDpadUp();
-                return true;
+                if (mSelectableTextViewsManager.handleUpRequest()) {
+                    playSound(Sounds.TAP);
+                    return true;
+                } else {
+                    playSound(Sounds.ERROR);
+                    return false;
+                }
             case KeyEvent.KEYCODE_ENTER:
-                mSelectableTextViewsManager.handleEnter();
-                return true;
+                if (mSelectableTextViewsManager.handleEnter()) {
+                    playSound(Sounds.SUCCESS);
+                    return true;
+                } else {
+                    playSound(Sounds.ERROR);
+                    return false;
+                }
             default:
                 return super.onKeyUp(keyCode, event);
         }
     }
 
-    Note getNoteWithTitle(String title) {
+    /**
+     * Finds a note with the given title
+     * @param title
+     * @return
+     */
+    private Note getNoteWithTitle(String title) {
         for (Note note : mNotes) {
             if (note.getTitle().equals(title)) {
                 return note;
@@ -200,34 +270,42 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
     }
 
     @Override
-    public void onTextViewSelected(TextView textView) {
+    public boolean onTextViewSelected(TextView textView) {
         String selectedText = textView.getText().toString();
         if (selectedText.equals(getResources().getString(R.string.create_new_note))) {
             Date now = DateUtilities.now();
             String title = DateUtilities.formatDate(now, "yyyy-MM-dd") + " | " + DateUtilities.formatDate(now, "HH:mm:ss") + " | New note";
             startEditActivityForNewNote(title);
+            return true;
         } else if (selectedText.equals(getResources().getString(R.string.add_new_todo))) {
             Date now = DateUtilities.now();
             String title = DateUtilities.formatDate(now, "yyyy-MM-dd") + " | " + DateUtilities.formatDate(now, "HH:mm:ss") + " | New TODO";
             startEditActivityForNewNote(title);
+            return true;
         } else if (selectedText.equals(getResources().getString(R.string.add_existing))) {
             reloadNotes();
+            return true;
         } else if (selectedText.equals("▲")) {
             // Scroll up
             mLimitedViewItemManager.scrollUp();
             clearNotesFromView();
             setVisibleNotes();
+            return true;
         } else if (selectedText.equals("▼")) {
             // Scroll down
             mLimitedViewItemManager.scrollDown();
             clearNotesFromView();
             setVisibleNotes();
+            return true;
         } else if (getNoteWithTitle(selectedText) != null) {
             startEditActivityForNote(getNoteWithTitle(selectedText));
+            return true;
         }
+
+        return false;
     }
 
-    void startEditActivityForNewNote(String title) {
+    private void startEditActivityForNewNote(String title) {
         Note note = new Note(null, title, Note.DEFAULT_CONTENT, DateUtilities.timestamp(), DateUtilities.timestamp());
         mGlassNotesDataStore.createNote(note, new GlassNotesDataStore.Promise<Note>() {
             @Override
@@ -242,56 +320,44 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
         });
     }
 
-    void startEditActivityForNote(Note note) {
+    private void startEditActivityForNote(Note note) {
         Intent intent = new Intent(this, EditActivity.class);
         intent.putExtra(Note.EXTRA_TAG, note);
         startActivity(intent);
     }
 
     private GestureDetector createGestureDetector(Context context) {
-        GestureDetector gestureDetector = new GestureDetector(context);
-        //Create a base listener for generic gestures
-        gestureDetector.setBaseListener( new GestureDetector.BaseListener() {
-            @Override
-            public boolean onGesture(Gesture gesture) {
-                if (gesture == Gesture.TAP) {
-                    // do something on tap
-                    mSelectableTextViewsManager.handleEnter();
-                    playSound(Sounds.SUCCESS);
-                    return true;
-                } else if (gesture == Gesture.SWIPE_RIGHT) {
-                    if (mSelectableTextViewsManager.handleKeypadDpadUp()) {
-                        playSound(Sounds.TAP);
-                    } else {
-                        playSound(Sounds.ERROR);
+        return new GestureDetector(context) {{
+            setBaseListener( new GestureDetector.BaseListener() {
+                @Override
+                public boolean onGesture(Gesture gesture) {
+                    if (gesture == Gesture.TAP) {
+                        // do something on tap
+                        mSelectableTextViewsManager.handleEnter();
+                        playSound(Sounds.SUCCESS);
+                        return true;
+                    } else if (gesture == Gesture.SWIPE_RIGHT) {
+                        if (mSelectableTextViewsManager.handleUpRequest()) {
+                            playSound(Sounds.TAP);
+                            return true;
+                        } else {
+                            playSound(Sounds.ERROR);
+                            return false;
+                        }
+                    } else if (gesture == Gesture.SWIPE_LEFT) {
+                        // do something on left (backwards) swipe
+                        if (mSelectableTextViewsManager.handleDownRequest()) {
+                            playSound(Sounds.TAP);
+                            return true;
+                        } else {
+                            playSound(Sounds.ERROR);
+                            return false;
+                        }
                     }
-                    return true;
-                } else if (gesture == Gesture.SWIPE_LEFT) {
-                    // do something on left (backwards) swipe
-                    if (mSelectableTextViewsManager.handleKeypadDpadDown()) {
-                        playSound(Sounds.TAP);
-                    } else {
-                        playSound(Sounds.ERROR);
-                    }
-                    return true;
+                    return false;
                 }
-                return false;
-            }
-        });
-        gestureDetector.setFingerListener(new GestureDetector.FingerListener() {
-            @Override
-            public void onFingerCountChanged(int previousCount, int currentCount) {
-                // do something on finger count changes
-            }
-        });
-        gestureDetector.setScrollListener(new GestureDetector.ScrollListener() {
-            @Override
-            public boolean onScroll(float displacement, float delta, float velocity) {
-                // do something on scrolling
-                return true;
-            }
-        });
-        return gestureDetector;
+            });
+        }};
     }
 
     /*
@@ -305,8 +371,4 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
         return false;
     }
 
-    public void playSound(int sound) {
-        AudioManager audio = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
-        audio.playSoundEffect(sound);
-    }
 }

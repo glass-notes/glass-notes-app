@@ -12,7 +12,7 @@ import retrofit2.Response;
 public class GlassNotesGitHubAPIClient implements GlassNotesDataStore {
     public static final String TAG = GlassNotesGitHubAPIClient.class.getName();
 
-    GitHubClient mGitHubClient;
+    private GitHubClient mGitHubClient;
 
     public GlassNotesGitHubAPIClient(String authorizationTokenValue) {
         mGitHubClient = ClientFactory.getGitHubClient( authorizationTokenValue);

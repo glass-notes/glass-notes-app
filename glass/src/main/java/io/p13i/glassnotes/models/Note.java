@@ -14,19 +14,19 @@ public class Note implements Serializable {
     public static final String DEFAULT_CONTENT = "- ";
 
     @SerializedName("id")
-    String mId;
+    private String mId;
 
     @SerializedName("title")
-    String mTitle;
+    private String mTitle;
 
     @SerializedName("mContent")
-    String mContent;
+    private String mContent;
 
     @SerializedName("created_at")
-    String mCreatedAt;
+    private String mCreatedAt;
 
     @SerializedName("updated_at")
-    String mUpdatedAt;
+    private String mUpdatedAt;
 
     public Note(String title) {
         this(null, title, DEFAULT_CONTENT, DateUtilities.timestamp(), DateUtilities.timestamp());
