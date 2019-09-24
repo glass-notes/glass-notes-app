@@ -61,7 +61,7 @@ public class SelectableTextViewsManager {
         return indexOfViewInManagedViews(view) > -1;
     }
 
-    public boolean handleKeypadDpadDown() {
+    public boolean handleDownRequest() {
         // Set the next element to underlined
         TextView nextTextView = (TextView) getNextChild(getSelectedTextView());
         if (nextTextView != null) {
@@ -72,7 +72,7 @@ public class SelectableTextViewsManager {
         }
     }
 
-    public boolean handleKeypadDpadUp() {
+    public boolean handleUpRequest() {
         // Set the next element to underlined
         TextView previousTextView = (TextView) getPreviousChild(getSelectedTextView());
         if (previousTextView != null) {
@@ -83,8 +83,8 @@ public class SelectableTextViewsManager {
         }
     }
 
-    public void handleEnter() {
-        mOnTextViewSelectedListener.onTextViewSelected(getSelectedTextView());
+    public boolean handleEnter() {
+        return mOnTextViewSelectedListener.onTextViewSelected(getSelectedTextView());
     }
 
     private boolean managingTextView(View textView) {
@@ -146,6 +146,6 @@ public class SelectableTextViewsManager {
     }
 
     public interface OnTextViewSelectedListener {
-        void onTextViewSelected(TextView textView);
+        boolean onTextViewSelected(TextView textView);
     }
 }

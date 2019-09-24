@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.graphics.Typeface;
 import android.media.AudioManager;
 import android.os.Bundle;
-import android.text.format.DateUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
@@ -35,9 +34,7 @@ import io.p13i.glassnotes.utilities.SelectableTextViewsManager;
 
 
 public class MainActivity extends Activity implements
-        SelectableTextViewsManager.OnTextViewSelectedListener,
-        android.view.GestureDetector.OnGestureListener,
-        android.view.GestureDetector.OnDoubleTapListener {
+        SelectableTextViewsManager.OnTextViewSelectedListener {
 
     private final static String TAG = MainActivity.class.getName();
 
@@ -83,6 +80,8 @@ public class MainActivity extends Activity implements
         // Set status elemeents
         mStatusTextView.setPageTitle("Welcome to GlassNotes!");
         mStatusTextView.setStatus(mGlassNotesDataStore.getShortName());
+
+
     }
 
     void reloadNotes() {
@@ -179,15 +178,32 @@ public class MainActivity extends Activity implements
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         switch (keyCode) {
+            case KeyEvent.KEYCODE_D:
             case KeyEvent.KEYCODE_DPAD_DOWN:
-                mSelectableTextViewsManager.handleKeypadDpadDown();
-                return true;
+                if (mSelectableTextViewsManager.handleDownRequest()) {
+                    playSound(Sounds.TAP);
+                    return true;
+                } else {
+                    playSound(Sounds.ERROR);
+                    return false;
+                }
+            case KeyEvent.KEYCODE_A:
             case KeyEvent.KEYCODE_DPAD_UP:
-                mSelectableTextViewsManager.handleKeypadDpadUp();
-                return true;
+                if (mSelectableTextViewsManager.handleUpRequest()) {
+                    playSound(Sounds.TAP);
+                    return true;
+                } else {
+                    playSound(Sounds.ERROR);
+                    return false;
+                }
             case KeyEvent.KEYCODE_ENTER:
-                mSelectableTextViewsManager.handleEnter();
-                return true;
+                if (mSelectableTextViewsManager.handleEnter()) {
+                    playSound(Sounds.SUCCESS);
+                    return true;
+                } else {
+                    playSound(Sounds.ERROR);
+                    return false;
+                }
             default:
                 return super.onKeyUp(keyCode, event);
         }
@@ -203,31 +219,39 @@ public class MainActivity extends Activity implements
     }
 
     @Override
-    public void onTextViewSelected(TextView textView) {
+    public boolean onTextViewSelected(TextView textView) {
         String selectedText = textView.getText().toString();
         if (selectedText.equals(getResources().getString(R.string.create_new_note))) {
             Date now = DateUtilities.now();
             String title = DateUtilities.formatDate(now, "yyyy-MM-dd") + " | " + DateUtilities.formatDate(now, "HH:mm:ss") + " | New note";
             startEditActivityForNewNote(title);
+            return true;
         } else if (selectedText.equals(getResources().getString(R.string.add_new_todo))) {
             Date now = DateUtilities.now();
             String title = DateUtilities.formatDate(now, "yyyy-MM-dd") + " | " + DateUtilities.formatDate(now, "HH:mm:ss") + " | New TODO";
             startEditActivityForNewNote(title);
+            return true;
         } else if (selectedText.equals(getResources().getString(R.string.add_existing))) {
             reloadNotes();
+            return true;
         } else if (selectedText.equals("▲")) {
             // Scroll up
             mLimitedViewItemManager.scrollUp();
             clearNotesFromView();
             setVisibleNotes();
+            return true;
         } else if (selectedText.equals("▼")) {
             // Scroll down
             mLimitedViewItemManager.scrollDown();
             clearNotesFromView();
             setVisibleNotes();
+            return true;
         } else if (getNoteWithTitle(selectedText) != null) {
             startEditActivityForNote(getNoteWithTitle(selectedText));
+            return true;
         }
+
+        return false;
     }
 
     void startEditActivityForNewNote(String title) {
@@ -263,7 +287,7 @@ public class MainActivity extends Activity implements
                     playSound(Sounds.SUCCESS);
                     return true;
                 } else if (gesture == Gesture.SWIPE_RIGHT) {
-                    if (mSelectableTextViewsManager.handleKeypadDpadUp()) {
+                    if (mSelectableTextViewsManager.handleUpRequest()) {
                         playSound(Sounds.TAP);
                     } else {
                         playSound(Sounds.ERROR);
@@ -271,7 +295,7 @@ public class MainActivity extends Activity implements
                     return true;
                 } else if (gesture == Gesture.SWIPE_LEFT) {
                     // do something on left (backwards) swipe
-                    if (mSelectableTextViewsManager.handleKeypadDpadDown()) {
+                    if (mSelectableTextViewsManager.handleDownRequest()) {
                         playSound(Sounds.TAP);
                     } else {
                         playSound(Sounds.ERROR);
@@ -313,67 +337,4 @@ public class MainActivity extends Activity implements
         audio.playSoundEffect(sound);
     }
 
-    private android.view.GestureDetector mDetector;
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event){
-        if (this.mDetector.onTouchEvent(event)) {
-            return true;
-        }
-        return super.onTouchEvent(event);
-    }
-
-    @Override
-    public boolean onDown(MotionEvent event) {
-        Log.d(TAG,"onDown: " + event.toString());
-        return true;
-    }
-
-    @Override
-    public boolean onFling(MotionEvent event1, MotionEvent event2,
-                           float velocityX, float velocityY) {
-        Log.d(TAG, "onFling: " + event1.toString() + event2.toString());
-        return true;
-    }
-
-    @Override
-    public void onLongPress(MotionEvent event) {
-        Log.d(TAG, "onLongPress: " + event.toString());
-    }
-
-    @Override
-    public boolean onScroll(MotionEvent event1, MotionEvent event2, float distanceX,
-                            float distanceY) {
-        Log.d(TAG, "onScroll: " + event1.toString() + event2.toString());
-        return true;
-    }
-
-    @Override
-    public void onShowPress(MotionEvent event) {
-        Log.d(TAG, "onShowPress: " + event.toString());
-    }
-
-    @Override
-    public boolean onSingleTapUp(MotionEvent event) {
-        Log.d(TAG, "onSingleTapUp: " + event.toString());
-        return true;
-    }
-
-    @Override
-    public boolean onDoubleTap(MotionEvent event) {
-        Log.d(TAG, "onDoubleTap: " + event.toString());
-        return true;
-    }
-
-    @Override
-    public boolean onDoubleTapEvent(MotionEvent event) {
-        Log.d(TAG, "onDoubleTapEvent: " + event.toString());
-        return true;
-    }
-
-    @Override
-    public boolean onSingleTapConfirmed(MotionEvent event) {
-        Log.d(TAG, "onSingleTapConfirmed: " + event.toString());
-        return true;
-    }
 }
