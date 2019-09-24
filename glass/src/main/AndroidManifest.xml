@@ -24,9 +24,11 @@
         </activity>
         <activity android:name=".activities.EditActivity" />
         <activity android:name=".activities.GlassNotesActivity" />
+        <activity android:name=".activities.CameraActivity" />
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.CAMERA" />
 
 </manifest>

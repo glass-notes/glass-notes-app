@@ -223,6 +223,14 @@ public class MainActivity extends GlassNotesActivity implements
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
+
+        if (event.isCtrlPressed()) {
+            if (keyCode == KeyEvent.KEYCODE_T) {
+                startActivity(new Intent(this, CameraActivity.class));
+                return true;
+            }
+        }
+
         switch (keyCode) {
             case KeyEvent.KEYCODE_D:
             case KeyEvent.KEYCODE_DPAD_DOWN:
