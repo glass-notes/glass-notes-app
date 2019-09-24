@@ -2,80 +2,44 @@ package io.p13i.glassnotes.models;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.io.Serializable;
-import java.util.HashMap;
+import org.kohsuke.github.GHContent;
 
-import io.p13i.glassnotes.datastores.github.File;
-import io.p13i.glassnotes.datastores.github.Gist;
-import io.p13i.glassnotes.utilities.DateUtilities;
+import java.io.IOException;
+import java.io.Serializable;
+
+import io.p13i.glassnotes.utilities.StringUtilities;
 
 public class Note implements Serializable {
-    public static final String EXTRA_TAG = Note.class.getName();
     public static final String DEFAULT_CONTENT = "- ";
+    public static final String EXTRA_TAG = Note.class.getName();
 
-    @SerializedName("id")
-    public String mId;
+    @SerializedName("path")
+    public String mPath;
 
-    @SerializedName("title")
-    public String mTitle;
+    @SerializedName("name")
+    public String mName;
 
-    @SerializedName("mContent")
+    @SerializedName("content")
     public String mContent;
 
-    @SerializedName("created_at")
-    public String mCreatedAt;
-
-    @SerializedName("updated_at")
-    public String mUpdatedAt;
-
-    public Note(String title) {
-        this(null, title, DEFAULT_CONTENT, DateUtilities.timestamp(), DateUtilities.timestamp());
-    }
-
-    public Note(String id, String title, String content, String createdAt, String updatedAt) {
-        mId = id;
-        mTitle = title;
+    public Note(String path, String name, String content) {
+        mPath = path;
+        mName = name;
         mContent = content;
-        mCreatedAt = createdAt;
-        mUpdatedAt = updatedAt;
     }
 
-    public String getId() {
-        return this.mId;
+    public String getPath() {
+        return mPath;
     }
 
-    public void setId(String id) {
-        this.mId = id;
-    }
-
-    public String getTitle() {
-        return this.mTitle;
-    }
+    public String getName() { return mName; }
 
     public String getContent() {
-        return this.mContent;
-    }
-
-    public void setContent(String contents) {
-        this.mContent = contents;
-    }
-
-    public Gist asGist() {
-        return new Gist() {{
-            mId = Note.this.mId;
-            mFiles = new HashMap<String, File>() {{
-                put(mTitle, new File() {{
-                    mFilename = Note.this.mTitle;
-                    mContent = Note.this.mContent;
-                }});
-            }};
-            mCreatedAt = Note.this.mCreatedAt;
-            mUpdatedAt = Note.this.mUpdatedAt;
-        }};
+        return mContent;
     }
 
     @Override
     public String toString() {
-        return this.mTitle;
+        return this.mPath;
     }
 }

@@ -19,7 +19,6 @@ import butterknife.ButterKnife;
 import io.p13i.glassnotes.R;
 import io.p13i.glassnotes.datastores.Promise;
 import io.p13i.glassnotes.models.Note;
-import io.p13i.glassnotes.datastores.github.GlassNotesGitHubAPIClient;
 import io.p13i.glassnotes.ui.StatusTextView;
 import io.p13i.glassnotes.user.PreferenceManager;
 import io.p13i.glassnotes.utilities.DateUtilities;
@@ -76,10 +75,10 @@ public class EditActivity extends GlassNotesActivity {
         mNoteEditText.setTextColor(getResources().getColor(R.color.white));
 
         // Load the Note's mContent from the data store
-        PreferenceManager.getInstance().getDataStore().getNote(mNote.getId(), new Promise<Note>() {
+        PreferenceManager.getInstance().getDataStore().getNote(mNote.getPath(), new Promise<Note>() {
             @Override
             public void resolved(final Note data) {
-                Log.i(TAG, "Got note from data store. Title: '" + data.getTitle() + "'; " +
+                Log.i(TAG, "Got note from data store. Title: '" + data.getName() + "'; " +
                         "data store: " + PreferenceManager.getInstance().getDataStore().getShortName());
                 EditActivity.this.playSound(Sounds.SUCCESS);
                 // Update the UI with the note retrieved from the data store
@@ -100,13 +99,13 @@ public class EditActivity extends GlassNotesActivity {
 
             @Override
             public void rejected(Throwable t) {
-                Log.e(TAG, "Failed to fetch gist with ID: " + mNote.getId(), t);
+                Log.e(TAG, "Failed to fetch gist with ID: " + mNote.getPath(), t);
                 playSound(Sounds.ERROR);
             }
         });
 
         // Set some status bar elements
-        mStatusTextView.setPageTitle(mNote.getTitle());
+        mStatusTextView.setPageTitle(mNote.getName());
         mStatusTextView.setStatus("Welcome!");
     }
 
@@ -148,20 +147,20 @@ public class EditActivity extends GlassNotesActivity {
         mSaveInProgress = true;
 
         // Else, it was updated
-        mNote.setContent(mNoteEditText.getText().toString());
+        mNote = new Note(mNote.getPath(), mNote.getName(), mNoteEditText.getText().toString());
 
         // Run the save task
         PreferenceManager.getInstance().getDataStore().saveNote(mNote, new Promise<Note>() {
             @Override
             public void resolved(Note data) {
-                Log.i(TAG, "Saved note with id: " + data.getId());
+                Log.i(TAG, "Saved note with id: " + data.getPath());
                 mSaveInProgress = false;
                 promise.resolved(data);
             }
 
             @Override
             public void rejected(Throwable t) {
-                Log.e(TAG, "Failed to save note with id: " + mNote.getId());
+                Log.e(TAG, "Failed to save note with id: " + mNote.getPath());
                 mSaveInProgress = false;
                 promise.rejected(t);
             }
@@ -228,12 +227,12 @@ public class EditActivity extends GlassNotesActivity {
         Log.i(TAG, "Saving note...");
 
         // Update the data model's mContent
-        mNote.setContent(mNoteEditText.getText().toString());
+        mNote = new Note(mNote.getPath(), mNote.getName(), mNoteEditText.getText().toString());
 
         saveNote(new Promise<Note>() {
             @Override
             public void resolved(Note data) {
-                Log.i(TAG, "Successfully saved note with id: " + data.getId());
+                Log.i(TAG, "Successfully saved note with id: " + data.getPath());
                 playSound(Sounds.DISMISSED);
 
                 Log.i(TAG, "Finishing " + EditActivity.class.getSimpleName());
@@ -242,7 +241,7 @@ public class EditActivity extends GlassNotesActivity {
 
             @Override
             public void rejected(Throwable t) {
-                Log.e(TAG, "Failed to save note with ID: " + mNote.getId(), t);
+                Log.e(TAG, "Failed to save note with ID: " + mNote.getPath(), t);
                 playSound(Sounds.ERROR);
             }
         });

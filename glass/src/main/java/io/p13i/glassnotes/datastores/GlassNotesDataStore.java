@@ -4,7 +4,7 @@ import java.util.List;
 
 import io.p13i.glassnotes.models.Note;
 
-public interface GlassNotesDataStore {
+public interface GlassNotesDataStore<T extends Note> {
     String getShortName();
     void createNote(Note note, Promise<Note> promise);
     void getNotes(Promise<List<Note>> promise);

@@ -206,7 +206,7 @@ public class MainActivity extends GlassNotesActivity implements
                 public void run() {
                     mSelectableTextViewsManager.addManagedTextViewChild(new TextView(MainActivity.this) {{
                         setId(View.generateViewId());
-                        setText(note.getTitle());
+                        setText(note.getName());
                         setTextViewCommonStyles(MainActivity.this, this);
                     }});
                 }
@@ -278,7 +278,7 @@ public class MainActivity extends GlassNotesActivity implements
      */
     private Note getNoteWithTitle(String title) {
         for (Note note : mNotes) {
-            if (note.getTitle().equals(title)) {
+            if (note.getName().equals(title)) {
                 return note;
             }
         }
@@ -331,7 +331,7 @@ public class MainActivity extends GlassNotesActivity implements
     }
 
     private void startEditActivityForNewNote(String title) {
-        Note note = new Note(null, title, Note.DEFAULT_CONTENT, DateUtilities.timestamp(), DateUtilities.timestamp());
+        Note note = new Note(null, title, "");
         PreferenceManager.getInstance().getDataStore().createNote(note, new Promise<Note>() {
             @Override
             public void resolved(Note data) {

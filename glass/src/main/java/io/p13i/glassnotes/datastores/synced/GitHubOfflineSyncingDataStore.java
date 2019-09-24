@@ -1,13 +1,15 @@
-package io.p13i.glassnotes.datastores.github_offline;
+package io.p13i.glassnotes.datastores.synced;
 
 import android.content.Context;
 
+import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
 import io.p13i.glassnotes.datastores.Promise;
-import io.p13i.glassnotes.datastores.github.GlassNotesGitHubAPIClient;
+import io.p13i.glassnotes.datastores.github_repo.GitHubRepoDataStore;
+import io.p13i.glassnotes.datastores.github_repo.GitHubRepoNote;
 import io.p13i.glassnotes.datastores.localdisk.LocalDiskGlassNotesDataStore;
 import io.p13i.glassnotes.models.Note;
 
@@ -15,13 +17,18 @@ import io.p13i.glassnotes.models.Note;
 /**
  * Enables any note taking at anytime by implementing syncing between GitHub and local disk notes
  */
-public class GitHubOfflineSyncingDataStore implements GlassNotesDataStore {
-    private final LocalDiskGlassNotesDataStore mLocalDiskGlassNotesDataStore;
-    private final GlassNotesGitHubAPIClient mGlassNotesGitHubAPIClient;
+public class GitHubOfflineSyncingDataStore implements GlassNotesDataStore<GitHubRepoNote> {
+    private LocalDiskGlassNotesDataStore mLocalDiskGlassNotesDataStore;
+    private GitHubRepoDataStore mGitHubRepoDataStore;
 
-    public GitHubOfflineSyncingDataStore(Context context, String githubToken) {
+    public GitHubOfflineSyncingDataStore(Context context, final String githubToken, final String ownerAndRepo) {
         this.mLocalDiskGlassNotesDataStore = new LocalDiskGlassNotesDataStore(context);
-        this.mGlassNotesGitHubAPIClient = new GlassNotesGitHubAPIClient(githubToken);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                GitHubOfflineSyncingDataStore.this.mGitHubRepoDataStore = new GitHubRepoDataStore(githubToken, ownerAndRepo);
+            }
+        }).run();
     }
 
     @Override
@@ -31,7 +38,7 @@ public class GitHubOfflineSyncingDataStore implements GlassNotesDataStore {
 
     @Override
     public void createNote(final Note note, final Promise<Note> promise) {
-        this.mGlassNotesGitHubAPIClient.createNote(note, new Promise<Note>() {
+        this.mGitHubRepoDataStore.createNote(note, new Promise<Note>() {
             @Override
             public void resolved(Note data) {
                 promise.resolved(data);
@@ -57,7 +64,7 @@ public class GitHubOfflineSyncingDataStore implements GlassNotesDataStore {
 
     @Override
     public void getNotes(final Promise<List<Note>> promise) {
-        this.mGlassNotesGitHubAPIClient.getNotes(new Promise<List<Note>>() {
+        this.mGitHubRepoDataStore.getNotes(new Promise<List<Note>>() {
             @Override
             public void resolved(final List<Note> githubNotes) {
                 mLocalDiskGlassNotesDataStore.getNotes(new Promise<List<Note>>() {
@@ -95,7 +102,7 @@ public class GitHubOfflineSyncingDataStore implements GlassNotesDataStore {
 
     @Override
     public void getNote(final String id, final Promise<Note> promise) {
-        this.mGlassNotesGitHubAPIClient.getNote(id, new Promise<Note>() {
+        this.mGitHubRepoDataStore.getNote(id, new Promise<Note>() {
             @Override
             public void resolved(Note data) {
                 promise.resolved(data);
@@ -120,7 +127,7 @@ public class GitHubOfflineSyncingDataStore implements GlassNotesDataStore {
 
     @Override
     public void saveNote(final Note note, final Promise<Note> promise) {
-        this.mGlassNotesGitHubAPIClient.saveNote(note, new Promise<Note>() {
+        this.mGitHubRepoDataStore.saveNote(note, new Promise<Note>() {
             @Override
             public void resolved(Note data) {
                 promise.resolved(data);

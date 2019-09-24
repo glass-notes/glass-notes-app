@@ -9,8 +9,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
-import io.p13i.glassnotes.datastores.github.GlassNotesGitHubAPIClient;
-import io.p13i.glassnotes.datastores.github_offline.GitHubOfflineSyncingDataStore;
+import io.p13i.glassnotes.datastores.github_repo.GitHubRepoDataStore;
+import io.p13i.glassnotes.datastores.synced.GitHubOfflineSyncingDataStore;
 import io.p13i.glassnotes.datastores.localdisk.LocalDiskGlassNotesDataStore;
 import io.p13i.glassnotes.datastores.nil.NilDataStore;
 
@@ -37,6 +37,11 @@ public class PreferenceManager {
      * The user's preferred way to save notes
      */
     private GlassNotesDataStore mPreferredDataStore = new NilDataStore();
+
+    /**
+     * The owner and repo of the notes repo
+     */
+    private String mOwnerAndRepo;
 
     /**
      * Access token for GitHub gists
@@ -89,14 +94,20 @@ public class PreferenceManager {
             return false;
         }
 
-        if (preferences.mPreferredDataStoreName != null) {
-            if (preferences.mPreferredDataStoreName.equals(GitHubOfflineSyncingDataStore.class.getSimpleName())) {
-                mPreferredDataStore = new GitHubOfflineSyncingDataStore(context, mPreferredGitHubAccessToken);
+        if (preferences.mOwnerAndRepo != null) {
+            mOwnerAndRepo = preferences.mOwnerAndRepo;
+        } else {
+            return false;
+        }
 
-            } else if (preferences.mPreferredDataStoreName.equals(GlassNotesGitHubAPIClient.class.getSimpleName())) {
-                mPreferredDataStore = new GlassNotesGitHubAPIClient(mPreferredGitHubAccessToken);
+        if (preferences.mDataStoreName != null) {
+            if (preferences.mDataStoreName.equals(GitHubOfflineSyncingDataStore.class.getSimpleName())) {
+                mPreferredDataStore = new GitHubOfflineSyncingDataStore(context, mPreferredGitHubAccessToken, mOwnerAndRepo);
 
-            } else if (preferences.mPreferredDataStoreName.equals(LocalDiskGlassNotesDataStore.class.getSimpleName())) {
+            } else if (preferences.mDataStoreName.equals(GitHubRepoDataStore.class.getSimpleName())) {
+                mPreferredDataStore = new GitHubRepoDataStore(mOwnerAndRepo, mPreferredGitHubAccessToken);
+
+            } else if (preferences.mDataStoreName.equals(LocalDiskGlassNotesDataStore.class.getSimpleName())) {
                 mPreferredDataStore = new LocalDiskGlassNotesDataStore(context);
 
             } else {
@@ -121,9 +132,10 @@ public class PreferenceManager {
         Log.i(TAG, "Saving preferences to system");
 
         Preferences preferences = new Preferences() {{
-            mSavePeriodMs = mPreferredSavePeriodMs;
-            mPreferredDataStoreName = mPreferredDataStore.getClass().getSimpleName();
-            mGitHubAccessToken = mPreferredGitHubAccessToken;
+            mSavePeriodMs = PreferenceManager.this.mPreferredSavePeriodMs;
+            mDataStoreName = PreferenceManager.this.mPreferredDataStore.getClass().getSimpleName();
+            mGitHubAccessToken = PreferenceManager.this.mPreferredGitHubAccessToken;
+            mOwnerAndRepo = PreferenceManager.this.mOwnerAndRepo;
         }};
 
         String serializedPreferences = new GsonBuilder().create().toJson(preferences);

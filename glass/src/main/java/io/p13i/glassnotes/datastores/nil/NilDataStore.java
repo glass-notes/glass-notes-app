@@ -11,7 +11,7 @@ import io.p13i.glassnotes.models.Note;
 /**
  * Returns an empty list in getNotes. All other methods are rejected promises.
  */
-public class NilDataStore implements GlassNotesDataStore {
+public class NilDataStore implements GlassNotesDataStore<Note> {
     private static Throwable sCommonException = new RuntimeException("You're using the " + NilDataStore.class.getSimpleName());
 
     @Override
@@ -26,9 +26,7 @@ public class NilDataStore implements GlassNotesDataStore {
 
     @Override
     public void getNotes(Promise<List<Note>> promise) {
-        promise.resolved(new ArrayList<Note>(1) {{
-            add(new Note("Using nil data store, no notes..."));
-        }});
+        promise.resolved(new ArrayList<Note>(0));
     }
 
     @Override

@@ -10,14 +10,15 @@
 2. Open in Android Studio
 3. Run the application to your Google Glass
 4. Visit GitHub's Token Settings: https://github.com/settings/tokens
-5. Create a token with the `gist :: Create gists` option ticked
+5. Create a token with the `repo :: Full control of private repositories` option ticked
 6. Generate an access token
 7. Visit https://jsoneditoronline.org/ and add the following JSON code:
 ```json
 {
   "savePeriodMs": 5000,
   "preferredDataStoreName": "GitHubOfflineSyncingDataStore",
-  "githubAccessToken": "GITHUB_ACCESS_TOKEN"
+  "githubAccessToken": "GITHUB_ACCESS_TOKEN",
+  "githubRepoOwnerAndPath": "owner/repo"
 }
 ```
 8. Replace the access token with the one you generated above

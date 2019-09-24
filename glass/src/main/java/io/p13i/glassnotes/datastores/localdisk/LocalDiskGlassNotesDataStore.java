@@ -16,11 +16,10 @@ import java.util.UUID;
 
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
 import io.p13i.glassnotes.datastores.Promise;
-import io.p13i.glassnotes.datastores.github.ClientFactory;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.utilities.Assert;
 
-public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore {
+public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
     private static final String TAG = LocalDiskGlassNotesDataStore.class.getName();
 
     private Context mContext;
@@ -99,20 +98,18 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore {
 
     @Override
     public void createNote(Note note, Promise<Note> promise) {
-        Gson gson = ClientFactory.getGson();
-        note.setId(generateTemporaryId());
-        write(note.getId(), gson.toJson(note));
+        Note newNote = new Note(note.getPath(), generateTemporaryId(), note.getContent());
+        write(newNote.getPath(), new Gson().toJson(note));
         promise.resolved(note);
     }
 
     @Override
     public void getNotes(Promise<List<Note>> promise) {
-        Gson gson = ClientFactory.getGson();
 
         List<Note> notes = new ArrayList<Note>();
         File[] files = getStorageDirectory().listFiles();
         for (File noteFile : files) {
-            notes.add(gson.fromJson(read(noteFile), Note.class));
+            notes.add(new Gson().fromJson(read(noteFile), Note.class));
         }
 
         promise.resolved(notes);
@@ -124,15 +121,13 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore {
         if (fileContents == null) {
             promise.rejected(new Throwable());
         }
-        Gson gson = ClientFactory.getGson();
-        Note note = gson.fromJson(fileContents, Note.class);
+        Note note = new Gson().fromJson(fileContents, Note.class);
         promise.resolved(note);
     }
 
     @Override
     public void saveNote(Note note, Promise<Note> promise) {
-        Gson gson = ClientFactory.getGson();
-        write(note.getId(), gson.toJson(note));
+        write(note.getPath(), new Gson().toJson(note));
         promise.resolved(note);
     }
 }
