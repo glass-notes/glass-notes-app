@@ -24,3 +24,22 @@
 9. Visit https://www.the-qrcode-generator.com/ and paste in the modified JSON from above
 10. In the Glass Notes application, select the `Load settings →` and scan the QR code from step 9
 11. Enjoy the application!
+
+## Usage
+
+### Main Activity
+
+* Navigate up by swiping forward on the Glass touch pad or pressing `a` on the connected keyboard.
+* Navigate down by swiping back on the Glass touch pad or pressing `d` on the connected keyboard.
+* Select an underlined item by tapping on the Glass touch page or pressing Enter on the connected keyboard.
+* Load settings from the QR (specified in *Installation*) by tapping on `Load settings →` or pressing `ctrl` and `t` on your keyboard.
+
+### QR Code Reader Activity
+
+* Scan a QR code (you may have to come close to the QR code screen)
+
+### Edit Activity
+
+* Type any key to enter text into the text editor.
+* Press `ctrl` and `s` to manually save the document to the specified data store.
+* Press `ctrl` and `x` to save and exit from the text editor.
