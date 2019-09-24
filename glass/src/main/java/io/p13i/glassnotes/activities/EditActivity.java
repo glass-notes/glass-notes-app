@@ -1,13 +1,14 @@
 package io.p13i.glassnotes.activities;
 
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
+
+import com.google.android.glass.media.Sounds;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -24,7 +25,7 @@ import io.p13i.glassnotes.utilities.DateUtilities;
 /**
  * Activity for editing a given Note
  */
-public class EditActivity extends Activity {
+public class EditActivity extends GlassNotesActivity {
 
     public final static String TAG = EditActivity.class.getName();
 
@@ -117,6 +118,19 @@ public class EditActivity extends Activity {
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (event.isCtrlPressed()) {
             if (keyCode == KeyEvent.KEYCODE_S) {
+                saveNote(new GlassNotesDataStore.Promise<Note>() {
+                    @Override
+                    public void resolved(Note data) {
+                        playSound(Sounds.SUCCESS);
+                    }
+
+                    @Override
+                    public void rejected(Throwable t) {
+                        playSound(Sounds.ERROR);
+                    }
+                });
+                return true;
+            } else if (keyCode == KeyEvent.KEYCODE_X) {
                 saveAndFinish();
                 return true;
             }
@@ -151,11 +165,13 @@ public class EditActivity extends Activity {
         saveNote(new GlassNotesGitHubAPIClient.Promise<Note>() {
             @Override
             public void resolved(Note data) {
+                playSound(Sounds.DISMISSED);
                 EditActivity.this.finish();
             }
 
             @Override
             public void rejected(Throwable t) {
+                playSound(Sounds.ERROR);
                 Log.e(TAG, getString(R.string.error_failed_to_save_note), t);
             }
         });

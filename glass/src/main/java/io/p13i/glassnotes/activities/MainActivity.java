@@ -33,7 +33,7 @@ import io.p13i.glassnotes.utilities.LimitedViewItemManager;
 import io.p13i.glassnotes.utilities.SelectableTextViewsManager;
 
 
-public class MainActivity extends Activity implements
+public class MainActivity extends GlassNotesActivity implements
         SelectableTextViewsManager.OnTextViewSelectedListener {
 
     private final static String TAG = MainActivity.class.getName();
@@ -330,11 +330,6 @@ public class MainActivity extends Activity implements
             return mGestureDetector.onMotionEvent(event);
         }
         return false;
-    }
-
-    public void playSound(int sound) {
-        AudioManager audio = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
-        audio.playSoundEffect(sound);
     }
 
 }
