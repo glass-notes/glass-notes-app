@@ -11,13 +11,13 @@ import io.p13i.glassnotes.models.Note;
 
 public class Gist implements Serializable {
     @SerializedName("id")
-    protected String mId;
+    public String mId;
     @SerializedName("created_at")
-    protected String mCreatedAt;
+    public String mCreatedAt;
     @SerializedName("updated_at")
-    protected String mUpdatedAt;
+    public String mUpdatedAt;
     @SerializedName("files")
-    protected Map<String, File> mFiles;
+    public Map<String, File> mFiles;
 
     File getFirstFile() {
         List<String> filenames = new ArrayList<String>(mFiles.keySet());

@@ -61,17 +61,6 @@ public class SelectableTextViewsManager {
         return indexOfViewInManagedViews(view) > -1;
     }
 
-    public boolean handleDownRequest() {
-        // Set the next element to underlined
-        TextView nextTextView = (TextView) getNextChild(getSelectedTextView());
-        if (nextTextView != null) {
-            setSelectedTextView(nextTextView);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     public boolean handleUpRequest() {
         // Set the next element to underlined
         TextView previousTextView = (TextView) getPreviousChild(getSelectedTextView());
@@ -83,17 +72,19 @@ public class SelectableTextViewsManager {
         }
     }
 
-    public boolean handleEnter() {
-        return mOnTextViewSelectedListener.onTextViewSelected(getSelectedTextView());
+    public boolean handleDownRequest() {
+        // Set the next element to underlined
+        TextView nextTextView = (TextView) getNextChild(getSelectedTextView());
+        if (nextTextView != null) {
+            setSelectedTextView(nextTextView);
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    private boolean managingTextView(View textView) {
-        for (TextView tv : mTextViews) {
-            if (tv.getId() == textView.getId()) {
-                return true;
-            }
-        }
-        return false;
+    public boolean handleEnter() {
+        return mOnTextViewSelectedListener.onTextViewSelected(getSelectedTextView());
     }
 
     private View getNextChild(View afterView) {

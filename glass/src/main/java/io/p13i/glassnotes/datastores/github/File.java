@@ -9,14 +9,14 @@ import java.io.Serializable;
  */
 public class File implements Serializable {
     @SerializedName("filename")
-    protected String mFilename;
+    public String mFilename;
 
     @SerializedName("size")
-    protected Integer size;
+    public Integer size;
 
     @SerializedName("raw_url")
-    protected String rawUrl;
+    public String rawUrl;
 
     @SerializedName("content")
-    protected String mContent;
+    public String mContent;
 }

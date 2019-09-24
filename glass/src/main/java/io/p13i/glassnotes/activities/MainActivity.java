@@ -1,10 +1,8 @@
 package io.p13i.glassnotes.activities;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
-import android.media.AudioManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -43,7 +41,12 @@ public class MainActivity extends GlassNotesActivity implements
     /**
      * The maximum visible notes on the screen
      */
-    private static final int MAX_VISIBLE_NOTES = 5;
+    private static final int MAX_VISIBLE_NOTES = 3;
+
+    /**
+     * Used to get results from the QR-code reading activity
+     */
+    private static final int SETTINGS_QR_CODE_READER_RESULT_CODE = 0xc0de;
 
     @BindView(R.id.activity_edit_status)
     StatusTextView mStatusTextView;
@@ -59,11 +62,6 @@ public class MainActivity extends GlassNotesActivity implements
      * Manages the select-ability of the text views in the terminal-like GUI
      */
     SelectableTextViewsManager mSelectableTextViewsManager;
-
-    /**
-     * The data-store of choice
-     */
-    GlassNotesDataStore mGlassNotesDataStore;
 
     /**
      * Manages the limited view window of notes visible in the GUI
@@ -90,8 +88,6 @@ public class MainActivity extends GlassNotesActivity implements
         // Key the screen on
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        mGlassNotesDataStore = Preferences.getUserPreferredDataStore(this);
-
         mGestureDetector = createGestureDetector(this);
 
         // So that keyboard entry will be registered
@@ -103,10 +99,6 @@ public class MainActivity extends GlassNotesActivity implements
 
         // Fetch from the data store and load into the UI
         reloadNotes();
-
-        // Set status elements
-        mStatusTextView.setPageTitle("Welcome to GlassNotes!");
-        mStatusTextView.setStatus(mGlassNotesDataStore.getShortName());
     }
 
     /**
@@ -127,9 +119,9 @@ public class MainActivity extends GlassNotesActivity implements
                 setTextViewCommonStyles(MainActivity.this, this);
             }});
 
-            addViewChild(new TextView(MainActivity.this) {{
+            addManagedTextViewChild(new TextView(MainActivity.this) {{
                 setId(View.generateViewId());
-                setText("");
+                setText(R.string.load_settings);
                 setTextViewCommonStyles(MainActivity.this, this);
             }});
 
@@ -162,9 +154,13 @@ public class MainActivity extends GlassNotesActivity implements
         clearNotesFromView();
 
         // Get the notes from the data store
-        mGlassNotesDataStore.getNotes(new GlassNotesGitHubAPIClient.Promise<List<Note>>() {
+        Preferences.getDataStore().getNotes(new GlassNotesGitHubAPIClient.Promise<List<Note>>() {
             @Override
             public void resolved(List<Note> data) {
+                // Set status elements
+                mStatusTextView.setPageTitle("Welcome to GlassNotes!");
+                mStatusTextView.setStatus(Preferences.getDataStore().getShortName());
+
                 mNotes = data;
                 // Display the notes in the GUI
                 mLimitedViewItemManager = new LimitedViewItemManager<Note>(mNotes,
@@ -175,6 +171,7 @@ public class MainActivity extends GlassNotesActivity implements
             @Override
             public void rejected(Throwable t) {
                 Log.e(TAG, "Failed to get notes.", t);
+                mStatusTextView.setPageTitle("Failed to get notes.");
             }
         });
     }
@@ -226,7 +223,7 @@ public class MainActivity extends GlassNotesActivity implements
 
         if (event.isCtrlPressed()) {
             if (keyCode == KeyEvent.KEYCODE_T) {
-                startActivity(new Intent(this, CameraActivity.class));
+                startQRCodeActivityToGetPreferences();
                 return true;
             }
         }
@@ -263,6 +260,11 @@ public class MainActivity extends GlassNotesActivity implements
         }
     }
 
+    private void startQRCodeActivityToGetPreferences() {
+        Intent intent = new Intent(this, QRCodeReaderActivity.class);
+        startActivityForResult(intent, SETTINGS_QR_CODE_READER_RESULT_CODE);
+    }
+
     /**
      * Finds a note with the given title
      * @param title
@@ -290,7 +292,10 @@ public class MainActivity extends GlassNotesActivity implements
             String title = DateUtilities.formatDate(now, "yyyy-MM-dd") + " | " + DateUtilities.formatDate(now, "HH:mm:ss") + " | New TODO";
             startEditActivityForNewNote(title);
             return true;
-        } else if (selectedText.equals(getResources().getString(R.string.add_existing))) {
+        } else if (selectedText.equals(getResources().getString(R.string.load_settings))) {
+            startQRCodeActivityToGetPreferences();
+            return true;
+        }  else if (selectedText.equals(getResources().getString(R.string.add_existing))) {
             reloadNotes();
             return true;
         } else if (selectedText.equals("▲")) {
@@ -315,7 +320,7 @@ public class MainActivity extends GlassNotesActivity implements
 
     private void startEditActivityForNewNote(String title) {
         Note note = new Note(null, title, Note.DEFAULT_CONTENT, DateUtilities.timestamp(), DateUtilities.timestamp());
-        mGlassNotesDataStore.createNote(note, new GlassNotesDataStore.Promise<Note>() {
+        Preferences.getDataStore().createNote(note, new GlassNotesDataStore.Promise<Note>() {
             @Override
             public void resolved(Note data) {
                 startEditActivityForNote(data);
@@ -332,6 +337,21 @@ public class MainActivity extends GlassNotesActivity implements
         Intent intent = new Intent(this, EditActivity.class);
         intent.putExtra(Note.EXTRA_TAG, note);
         startActivity(intent);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == SETTINGS_QR_CODE_READER_RESULT_CODE) {
+            if (resultCode == RESULT_OK) {
+                String qrCodeData = data.getStringExtra(QRCodeReaderActivity.INTENT_RESULT_KEY);
+                Log.i(TAG, "QR code data: " + qrCodeData);
+                Preferences.setFromJsonString(this, qrCodeData);
+                playSound(Sounds.SUCCESS);
+                reloadNotes();
+            }
+        }
+
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private GestureDetector createGestureDetector(Context context) {

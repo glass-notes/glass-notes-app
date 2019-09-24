@@ -80,7 +80,7 @@ public class EditActivity extends GlassNotesActivity {
         mNoteEditText.setTextColor(getResources().getColor(R.color.white));
 
         // Load the Note's mContent from the data store
-        mGlassNotesDataStore = Preferences.getUserPreferredDataStore(this);
+        mGlassNotesDataStore = Preferences.getDataStore();
         mGlassNotesDataStore.getNote(mNote.getId(), new GlassNotesGitHubAPIClient.Promise<Note>() {
             @Override
             public void resolved(final Note data) {
@@ -119,8 +119,8 @@ public class EditActivity extends GlassNotesActivity {
     void startSaveTimer() {
         mSaveTimer = new Timer();
         mSaveTimer.schedule(new SaveTimerTask(),
-            /* start after: */ Preferences.SAVE_PERIOD_MS,
-            /* run every: */ Preferences.SAVE_PERIOD_MS);
+            /* start after: */ Preferences.getSavePeriodMs(),
+            /* run every: */ Preferences.getSavePeriodMs());
     }
 
     /**

@@ -1,5 +1,6 @@
 package io.p13i.glassnotes.activities;
 
+import android.content.Intent;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
@@ -18,21 +19,25 @@ import net.sourceforge.zbar.Symbol;
 import net.sourceforge.zbar.SymbolSet;
 import net.sourceforge.zbar.Config;
 
+import java.util.Iterator;
 
-public class CameraActivity extends GlassNotesActivity {
-    private static final String TAG = CameraActivity.class.getName();
+
+public class QRCodeReaderActivity extends GlassNotesActivity {
+    private static final String TAG = QRCodeReaderActivity.class.getName();
     private CameraPreview mPreview;
     private Handler autoFocusHandler;
     private Camera mCamera;
     private ImageScanner scanner;
     private boolean previewing;
 
+    public static final String INTENT_RESULT_KEY = "qrCodeResultData";
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
 
-        setContentView(R.layout.activity_camera);
+        setContentView(R.layout.activity_qr_code_reader);
 
         this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         this.getActionBar().hide();
@@ -103,10 +108,15 @@ public class CameraActivity extends GlassNotesActivity {
                 mCamera.stopPreview();
 
                 SymbolSet syms = scanner.getResults();
-                for (Symbol sym : syms) {
-                    String text = sym.getData();
-                    Log.d(TAG, text);
-                    break;
+                Iterator<Symbol> symbolIterator = syms.iterator();
+                if (symbolIterator.hasNext()) {
+                    final String text = symbolIterator.next().getData();
+
+                    setResult(RESULT_OK, new Intent() {{
+                        putExtra(INTENT_RESULT_KEY, text);
+                    }});
+
+                    finish();
                 }
             }
         }

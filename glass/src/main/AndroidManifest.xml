@@ -24,7 +24,7 @@
         </activity>
         <activity android:name=".activities.EditActivity" />
         <activity android:name=".activities.GlassNotesActivity" />
-        <activity android:name=".activities.CameraActivity" />
+        <activity android:name=".activities.QRCodeReaderActivity" />
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />
