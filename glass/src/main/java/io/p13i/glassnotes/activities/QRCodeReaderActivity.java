@@ -1,15 +1,10 @@
 package io.p13i.glassnotes.activities;
 
-import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
@@ -58,35 +53,14 @@ public class QRCodeReaderActivity extends GlassNotesActivity {
         this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Full screen
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        this.getActionBar().hide();
 
         mAutoFocusHandler = new Handler();
 
-        try {
-
-            if (mCamera != null) {
-                mCamera.release();
-                mCamera = null;
-            }
-
-            if (Camera.getNumberOfCameras() > 0) {
-                try {
-                    mCamera = Camera.open(Camera.CameraInfo.CAMERA_FACING_FRONT);
-
-                } catch (RuntimeException ex) {
-                    Log.e(TAG, "Unable to acquire camera", ex);
-                }
-            } else {
-                Log.e(TAG, "No cameras available");
-            }
-
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to open camera");
-            e.printStackTrace();
-        }
+        mCamera = Camera.open();
 
         if (mCamera == null) {
-            Toast.makeText(this, "Camera couldn't be acquired", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Camera cannot be locked", Toast.LENGTH_SHORT).show();
             finish();
         }
 
@@ -135,8 +109,6 @@ public class QRCodeReaderActivity extends GlassNotesActivity {
             mIsPreviewing = false;
             mCamera.setPreviewCallback(null);
             mCamera.stopPreview();
-            mCamera.release();
-            mCamera = null;
 
             SymbolSet symbolSet = mScanner.getResults();
             Iterator<Symbol> symbolIterator = symbolSet.iterator();
@@ -153,13 +125,4 @@ public class QRCodeReaderActivity extends GlassNotesActivity {
             finish();
         }
     };
-
-    @Override
-    public void finish() {
-        if (mCamera != null) {
-            mCamera.release();
-            mCamera = null;
-        }
-        super.finish();
-    }
 }
