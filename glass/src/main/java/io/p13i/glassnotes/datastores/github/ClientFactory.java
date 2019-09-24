@@ -20,6 +20,9 @@ import okhttp3.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+/**
+ * Support class for GitHub API
+ */
 public class ClientFactory {
     public static OkHttpClient getOkHttpClientWithAuthorizationHeader(final String authorizationHeaderValue) {
 

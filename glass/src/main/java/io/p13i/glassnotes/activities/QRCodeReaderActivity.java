@@ -10,6 +10,8 @@ import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import io.p13i.glassnotes.R;
 import io.p13i.glassnotes.camera.CameraPreview;
 
@@ -21,111 +23,106 @@ import net.sourceforge.zbar.Config;
 
 import java.util.Iterator;
 
-
+/**
+ * Reads a QR code from the camera.
+ * Based on https://github.com/jzplusplus/GlassWifiConnect/blob/96d8d67f79c209e204d5b728498cd4899c2640c0/src/com/jzplusplus/glasswificonnect/MainActivity.java
+ */
 public class QRCodeReaderActivity extends GlassNotesActivity {
     private static final String TAG = QRCodeReaderActivity.class.getName();
-    private CameraPreview mPreview;
-    private Handler autoFocusHandler;
+
+
+    private CameraPreview mCameraPreview;
+    private Handler mAutoFocusHandler;
     private Camera mCamera;
-    private ImageScanner scanner;
-    private boolean previewing;
+    private ImageScanner mScanner;
+    private boolean mIsPreviewing;
 
     public static final String INTENT_RESULT_KEY = "qrCodeResultData";
 
+    @BindView(R.id.camera_preview)
+    FrameLayout mCameraPreviewFrameLayout;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_qr_code_reader);
+        ButterKnife.bind(this);
 
+        // Keep screen on
         this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
+        // Full screen
         this.getActionBar().hide();
 
-        autoFocusHandler = new Handler();
+        mAutoFocusHandler = new Handler();
 
-        //For some reason, right after launching from the "ok, glass" menu the camera is locked
-        //Try 3 times to grab the camera, with a short delay in between.
-        for(int i=0; i < 3; i++)
-        {
-            mCamera = getCameraInstance();
-            if(mCamera != null) break;
+        mCamera = Camera.open();
 
-            Log.d(TAG, "Couldn't lock camera, will try " + (2-i) + " more times...");
-
-            try { Thread.sleep(500); } catch (InterruptedException e) { e.printStackTrace(); }
-        }
-        if(mCamera == null)
-        {
+        if (mCamera == null) {
             Toast.makeText(this, "Camera cannot be locked", Toast.LENGTH_SHORT).show();
             finish();
         }
 
         /* Instance barcode scanner */
-        scanner = new ImageScanner();
-        scanner.setConfig(0, Config.X_DENSITY, 3);
-        scanner.setConfig(0, Config.Y_DENSITY, 3);
+        mScanner = new ImageScanner() {{
+            setConfig(0, Config.X_DENSITY, 3);
+            setConfig(0, Config.Y_DENSITY, 3);
+        }};
 
-        mPreview = new CameraPreview(this, mCamera, previewCb, autoFocusCB);
-        FrameLayout preview = (FrameLayout)findViewById(R.id.cameraPreview);
-        preview.addView(mPreview);
+        mCameraPreview = new CameraPreview(this, mCamera, mCameraPreviewCallback, mAutoFocusCallBack);
+
+        mCameraPreviewFrameLayout.addView(mCameraPreview);
 
         super.onCreate(savedInstanceState);
     }
 
-    /** A safe way to get an instance of the Camera object. */
-    public static Camera getCameraInstance(){
-        Camera c = null;
-        try {
-            c = Camera.open();
-            Log.d(TAG, "getCamera = " + c);
-        } catch (Exception e){
-            Log.d(TAG, e.toString());
-        }
-        return c;
-    }
-
     // Mimic continuous auto-focusing
-    Camera.AutoFocusCallback autoFocusCB = new Camera.AutoFocusCallback() {
+    private Camera.AutoFocusCallback mAutoFocusCallBack = new Camera.AutoFocusCallback() {
         public void onAutoFocus(boolean success, Camera camera) {
-            autoFocusHandler.postDelayed(doAutoFocus, 1000);
+            mAutoFocusHandler.postDelayed(mPerformAutoFocusRunnable, 1000);
         }
     };
 
-    Camera.PreviewCallback previewCb = new Camera.PreviewCallback() {
-        public void onPreviewFrame(byte[] data, Camera camera) {
+    private Runnable mPerformAutoFocusRunnable = new Runnable() {
+        public void run() {
+            if (mIsPreviewing)
+                mCamera.autoFocus(mAutoFocusCallBack);
+        }
+    };
+
+    private Camera.PreviewCallback mCameraPreviewCallback = new Camera.PreviewCallback() {
+        public void onPreviewFrame(final byte[] data, Camera camera) {
             Camera.Parameters parameters = camera.getParameters();
             Camera.Size size = parameters.getPreviewSize();
 
-            Image barcode = new Image(size.width, size.height, "Y800");
-            barcode.setData(data);
+            Image barcode = new Image(size.width, size.height, /* color format: */ "Y800") {{
+                setData(data);
+            }};
 
-            int result = scanner.scanImage(barcode);
+            int result = mScanner.scanImage(barcode);
 
-            if (result != 0) {
-                previewing = false;
-                mCamera.setPreviewCallback(null);
-                mCamera.stopPreview();
-
-                SymbolSet syms = scanner.getResults();
-                Iterator<Symbol> symbolIterator = syms.iterator();
-                if (symbolIterator.hasNext()) {
-                    final String text = symbolIterator.next().getData();
-
-                    setResult(RESULT_OK, new Intent() {{
-                        putExtra(INTENT_RESULT_KEY, text);
-                    }});
-
-                    finish();
-                }
+            if (result == 0) {
+                return;
             }
-        }
-    };
 
-    private Runnable doAutoFocus = new Runnable() {
-        public void run() {
-            if (previewing)
-                mCamera.autoFocus(autoFocusCB);
+            mIsPreviewing = false;
+            mCamera.setPreviewCallback(null);
+            mCamera.stopPreview();
+
+            SymbolSet symbolSet = mScanner.getResults();
+            Iterator<Symbol> symbolIterator = symbolSet.iterator();
+            if (!symbolIterator.hasNext()) {
+                return;
+            }
+
+            final String text = symbolIterator.next().getData();
+
+            setResult(RESULT_OK, new Intent() {{
+                putExtra(INTENT_RESULT_KEY, text);
+            }});
+
+            finish();
         }
     };
 }

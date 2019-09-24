@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
+import io.p13i.glassnotes.datastores.Promise;
 import io.p13i.glassnotes.models.Note;
 import retrofit2.Call;
 import retrofit2.Callback;

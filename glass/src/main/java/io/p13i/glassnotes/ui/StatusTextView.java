@@ -7,6 +7,7 @@ import android.graphics.Typeface;
 import android.util.AttributeSet;
 import android.widget.TextView;
 
+import java.text.MessageFormat;
 import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -42,7 +43,7 @@ public class StatusTextView extends TextView {
         setTypeface(Typeface.MONOSPACE);
         setTextSize(14f);
 
-        setText(getShortPageTitle(mCurrentPageTitleStartingIndex) + " | " + now + " | " + mStatus);
+        setText(MessageFormat.format("{0} | {1} | {2}", getShortPageTitle(mCurrentPageTitleStartingIndex), now, mStatus));
 
         if (mTimer == null) {
             mTimer = new Timer();

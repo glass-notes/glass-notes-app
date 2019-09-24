@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
+import io.p13i.glassnotes.datastores.Promise;
 import io.p13i.glassnotes.models.Note;
 
 
@@ -25,7 +26,9 @@ public class NilDataStore implements GlassNotesDataStore {
 
     @Override
     public void getNotes(Promise<List<Note>> promise) {
-        promise.resolved(new ArrayList<Note>(0));
+        promise.resolved(new ArrayList<Note>(1) {{
+            add(new Note("Using nil data store, no notes..."));
+        }});
     }
 
     @Override

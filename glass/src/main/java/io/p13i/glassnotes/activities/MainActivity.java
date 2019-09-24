@@ -12,6 +12,7 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.glass.media.Sounds;
 import com.google.android.glass.touchpad.Gesture;
@@ -23,11 +24,10 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.p13i.glassnotes.R;
+import io.p13i.glassnotes.datastores.Promise;
 import io.p13i.glassnotes.models.Note;
-import io.p13i.glassnotes.datastores.GlassNotesDataStore;
-import io.p13i.glassnotes.datastores.github.GlassNotesGitHubAPIClient;
 import io.p13i.glassnotes.ui.StatusTextView;
-import io.p13i.glassnotes.user.Preferences;
+import io.p13i.glassnotes.user.PreferenceManager;
 import io.p13i.glassnotes.utilities.DateUtilities;
 import io.p13i.glassnotes.utilities.LimitedViewItemManager;
 import io.p13i.glassnotes.utilities.SelectableTextViewsManager;
@@ -97,6 +97,13 @@ public class MainActivity extends GlassNotesActivity implements
         // Add views
         populateLayout();
 
+        // Try to load the user's preferences from the disk
+        if (PreferenceManager.getInstance().loadFromSystem(this)) {
+            Toast.makeText(this, "Loaded preferences from disk", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(this, "Failed to load preferences from disk", Toast.LENGTH_SHORT).show();
+        }
+
         // Fetch from the data store and load into the UI
         reloadNotes();
     }
@@ -154,12 +161,12 @@ public class MainActivity extends GlassNotesActivity implements
         clearNotesFromView();
 
         // Get the notes from the data store
-        Preferences.getDataStore().getNotes(new GlassNotesGitHubAPIClient.Promise<List<Note>>() {
+        PreferenceManager.getInstance().getDataStore().getNotes(new Promise<List<Note>>() {
             @Override
             public void resolved(List<Note> data) {
                 // Set status elements
                 mStatusTextView.setPageTitle("Welcome to GlassNotes!");
-                mStatusTextView.setStatus(Preferences.getDataStore().getShortName());
+                mStatusTextView.setStatus(PreferenceManager.getInstance().getDataStore().getShortName());
 
                 mNotes = data;
                 // Display the notes in the GUI
@@ -266,9 +273,8 @@ public class MainActivity extends GlassNotesActivity implements
     }
 
     /**
-     * Finds a note with the given title
-     * @param title
-     * @return
+     * @param title the title
+     * @return a note with the given title
      */
     private Note getNoteWithTitle(String title) {
         for (Note note : mNotes) {
@@ -287,29 +293,35 @@ public class MainActivity extends GlassNotesActivity implements
             String title = DateUtilities.formatDate(now, "yyyy-MM-dd") + " | " + DateUtilities.formatDate(now, "HH:mm:ss") + " | New note";
             startEditActivityForNewNote(title);
             return true;
+
         } else if (selectedText.equals(getResources().getString(R.string.add_new_todo))) {
             Date now = DateUtilities.now();
             String title = DateUtilities.formatDate(now, "yyyy-MM-dd") + " | " + DateUtilities.formatDate(now, "HH:mm:ss") + " | New TODO";
             startEditActivityForNewNote(title);
             return true;
+
         } else if (selectedText.equals(getResources().getString(R.string.load_settings))) {
             startQRCodeActivityToGetPreferences();
             return true;
+
         }  else if (selectedText.equals(getResources().getString(R.string.add_existing))) {
             reloadNotes();
             return true;
+
         } else if (selectedText.equals("▲")) {
             // Scroll up
             mLimitedViewItemManager.scrollUp();
             clearNotesFromView();
             setVisibleNotes();
             return true;
+
         } else if (selectedText.equals("▼")) {
             // Scroll down
             mLimitedViewItemManager.scrollDown();
             clearNotesFromView();
             setVisibleNotes();
             return true;
+
         } else if (getNoteWithTitle(selectedText) != null) {
             startEditActivityForNote(getNoteWithTitle(selectedText));
             return true;
@@ -320,7 +332,7 @@ public class MainActivity extends GlassNotesActivity implements
 
     private void startEditActivityForNewNote(String title) {
         Note note = new Note(null, title, Note.DEFAULT_CONTENT, DateUtilities.timestamp(), DateUtilities.timestamp());
-        Preferences.getDataStore().createNote(note, new GlassNotesDataStore.Promise<Note>() {
+        PreferenceManager.getInstance().getDataStore().createNote(note, new Promise<Note>() {
             @Override
             public void resolved(Note data) {
                 startEditActivityForNote(data);
@@ -328,7 +340,7 @@ public class MainActivity extends GlassNotesActivity implements
 
             @Override
             public void rejected(Throwable t) {
-                throw new RuntimeException(t);
+                Log.e(TAG, "Failed to create note", t);
             }
         });
     }
@@ -344,10 +356,15 @@ public class MainActivity extends GlassNotesActivity implements
         if (requestCode == SETTINGS_QR_CODE_READER_RESULT_CODE) {
             if (resultCode == RESULT_OK) {
                 String qrCodeData = data.getStringExtra(QRCodeReaderActivity.INTENT_RESULT_KEY);
-                Log.i(TAG, "QR code data: " + qrCodeData);
-                Preferences.setFromJsonString(this, qrCodeData);
-                playSound(Sounds.SUCCESS);
-                reloadNotes();
+                if (PreferenceManager.getInstance().setFromJsonString(this, qrCodeData)) {
+                    Log.i(TAG, "Saved from preferences");
+                    PreferenceManager.getInstance().saveToSystem(this);
+                    playSound(Sounds.SUCCESS);
+                    reloadNotes();
+                } else {
+                    Log.e(TAG, "Failed to save from preferences");
+                    playSound(Sounds.ERROR);
+                }
             }
         }
 

@@ -7,6 +7,7 @@ import android.view.KeyEvent;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.google.android.glass.media.Sounds;
 
@@ -16,11 +17,11 @@ import java.util.TimerTask;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.p13i.glassnotes.R;
+import io.p13i.glassnotes.datastores.Promise;
 import io.p13i.glassnotes.models.Note;
-import io.p13i.glassnotes.datastores.GlassNotesDataStore;
 import io.p13i.glassnotes.datastores.github.GlassNotesGitHubAPIClient;
 import io.p13i.glassnotes.ui.StatusTextView;
-import io.p13i.glassnotes.user.Preferences;
+import io.p13i.glassnotes.user.PreferenceManager;
 import io.p13i.glassnotes.utilities.DateUtilities;
 
 
@@ -52,11 +53,6 @@ public class EditActivity extends GlassNotesActivity {
      */
     private boolean mSaveInProgress;
 
-    /**
-     * The data store being used
-     */
-    private GlassNotesDataStore mGlassNotesDataStore;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -80,10 +76,11 @@ public class EditActivity extends GlassNotesActivity {
         mNoteEditText.setTextColor(getResources().getColor(R.color.white));
 
         // Load the Note's mContent from the data store
-        mGlassNotesDataStore = Preferences.getDataStore();
-        mGlassNotesDataStore.getNote(mNote.getId(), new GlassNotesGitHubAPIClient.Promise<Note>() {
+        PreferenceManager.getInstance().getDataStore().getNote(mNote.getId(), new Promise<Note>() {
             @Override
             public void resolved(final Note data) {
+                Log.i(TAG, "Got note from data store. Title: '" + data.getTitle() + "'; " +
+                        "data store: " + PreferenceManager.getInstance().getDataStore().getShortName());
                 EditActivity.this.playSound(Sounds.SUCCESS);
                 // Update the UI with the note retrieved from the data store
                 runOnUiThread(new Runnable() {
@@ -103,8 +100,8 @@ public class EditActivity extends GlassNotesActivity {
 
             @Override
             public void rejected(Throwable t) {
-                Log.e(TAG, getString(R.string.error_failed_to_get_note), t);
-                EditActivity.this.playSound(Sounds.ERROR);
+                Log.e(TAG, "Failed to fetch gist with ID: " + mNote.getId(), t);
+                playSound(Sounds.ERROR);
             }
         });
 
@@ -119,38 +116,65 @@ public class EditActivity extends GlassNotesActivity {
     void startSaveTimer() {
         mSaveTimer = new Timer();
         mSaveTimer.schedule(new SaveTimerTask(),
-            /* start after: */ Preferences.getSavePeriodMs(),
-            /* run every: */ Preferences.getSavePeriodMs());
+            /* start after: */ PreferenceManager.getInstance().getSavePeriodMs(),
+            /* run every: */ PreferenceManager.getInstance().getSavePeriodMs());
+
+        Log.i(TAG, "Scheduled save timer with interval of " + PreferenceManager.getInstance().getSavePeriodMs() + " ms");
     }
 
     /**
      * Saves the {@code mNote} to the data store
-     * @param notePromise the callback
+     * @param promise the callback
      */
-    private void saveNote(GlassNotesDataStore.Promise<Note> notePromise) {
+    private void saveNote(final Promise<Note> promise) {
+        Log.i(TAG, "saveNote");
+
+        if (mSaveInProgress) {
+            Log.i(TAG, "Save in progress. Not continuing with save.");
+            return;
+        }
+
         // Only update the data store if the contents have changed
-        String currentText = mNote.getContent();
+        String priorText = mNote.getContent();
         String updatedText = mNoteEditText.getText().toString();
 
         // Only save to the data store if the contents have changed
-        if (currentText.equals(updatedText)) {
-            notePromise.resolved(mNote);
+        if (priorText.equals(updatedText)) {
+            Log.i(TAG, "Contents identical to prior note. Not continuing with save.");
+            promise.resolved(mNote);
             return;
         }
+
+        mSaveInProgress = true;
 
         // Else, it was updated
         mNote.setContent(mNoteEditText.getText().toString());
 
         // Run the save task
-        mGlassNotesDataStore.saveNote(mNote, notePromise);
+        PreferenceManager.getInstance().getDataStore().saveNote(mNote, new Promise<Note>() {
+            @Override
+            public void resolved(Note data) {
+                Log.i(TAG, "Saved note with id: " + data.getId());
+                mSaveInProgress = false;
+                promise.resolved(data);
+            }
+
+            @Override
+            public void rejected(Throwable t) {
+                Log.e(TAG, "Failed to save note with id: " + mNote.getId());
+                mSaveInProgress = false;
+                promise.rejected(t);
+            }
+        });
     }
 
+    /** Handles key events from the keyboard */
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (event.isCtrlPressed()) {
             if (keyCode == KeyEvent.KEYCODE_S) {
                 // ctrl-s is a simple save
-                saveNote(new GlassNotesDataStore.Promise<Note>() {
+                saveNote(new Promise<Note>() {
                     @Override
                     public void resolved(Note data) {
                         playSound(Sounds.SUCCESS);
@@ -176,6 +200,15 @@ public class EditActivity extends GlassNotesActivity {
      * Saves the note and finishes the activity
      */
     private void saveAndFinish() {
+        Log.i(TAG, "Saving and finishing.");
+
+        if (mSaveInProgress) {
+            Log.i(TAG, "Save in progress. Not finishing.");
+            playSound(Sounds.ERROR);
+            Toast.makeText(this, "Save in progress. Try again soon.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         // Update the UI
         runOnUiThread(new Runnable() {
             @Override
@@ -190,20 +223,27 @@ public class EditActivity extends GlassNotesActivity {
         mSaveTimer.purge();
         mSaveTimer = null;
 
+        Log.i(TAG, "Cleared save timer.");
+
+        Log.i(TAG, "Saving note...");
+
         // Update the data model's mContent
         mNote.setContent(mNoteEditText.getText().toString());
 
-        saveNote(new GlassNotesGitHubAPIClient.Promise<Note>() {
+        saveNote(new Promise<Note>() {
             @Override
             public void resolved(Note data) {
+                Log.i(TAG, "Successfully saved note with id: " + data.getId());
                 playSound(Sounds.DISMISSED);
+
+                Log.i(TAG, "Finishing " + EditActivity.class.getSimpleName());
                 EditActivity.this.finish();
             }
 
             @Override
             public void rejected(Throwable t) {
+                Log.e(TAG, "Failed to save note with ID: " + mNote.getId(), t);
                 playSound(Sounds.ERROR);
-                Log.e(TAG, getString(R.string.error_failed_to_save_note), t);
             }
         });
     }
@@ -215,12 +255,14 @@ public class EditActivity extends GlassNotesActivity {
         @Override
         public void run() {
             if (mSaveInProgress) {
+                Log.i(TAG, "Save in progress. Not saving again.");
                 return;
             }
 
-            saveNote(new GlassNotesGitHubAPIClient.Promise<Note>() {
+            saveNote(new Promise<Note>() {
                 @Override
                 public void resolved(Note data) {
+                    Log.i(TAG, "Timer saved successfully");
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
@@ -231,7 +273,8 @@ public class EditActivity extends GlassNotesActivity {
 
                 @Override
                 public void rejected(Throwable t) {
-                    Log.e(TAG, getString(R.string.error_failed_to_save_note), t);
+                    Log.e(TAG, "Timer failed to save note", t);
+                    playSound(Sounds.ERROR);
                 }
             });
         }

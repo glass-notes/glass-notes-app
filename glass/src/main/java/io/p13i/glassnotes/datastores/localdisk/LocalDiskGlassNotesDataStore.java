@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.UUID;
 
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
+import io.p13i.glassnotes.datastores.Promise;
 import io.p13i.glassnotes.datastores.github.ClientFactory;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.utilities.Assert;
