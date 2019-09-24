@@ -20,7 +20,6 @@ public class StatusTextView extends TextView {
     int mCurrentPageTitleStartingIndex = 0;
     String mStatus = "";
     private Timer mTimer;
-    private Date mNow;
 
     public StatusTextView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);

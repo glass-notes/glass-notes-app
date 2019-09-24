@@ -37,8 +37,24 @@ public class EditActivity extends GlassNotesActivity {
     @BindView(R.id.note_edit_text)
     EditText mNoteEditText;
 
+    /**
+     * The note being edited
+     */
     private Note mNote;
+
+    /**
+     * The timer on which saves are run
+     */
     private Timer mSaveTimer;
+
+    /**
+     * Flag to indicate if saving is currently in progress
+     */
+    private boolean mSaveInProgress;
+
+    /**
+     * The data store being used
+     */
     private GlassNotesDataStore mGlassNotesDataStore;
 
     @Override
@@ -52,6 +68,7 @@ public class EditActivity extends GlassNotesActivity {
         setContentView(R.layout.activity_edit);
         ButterKnife.bind(this);
 
+        // Full screen
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Get the target Note from the activity transition
@@ -67,6 +84,8 @@ public class EditActivity extends GlassNotesActivity {
         mGlassNotesDataStore.getNote(mNote.getId(), new GlassNotesGitHubAPIClient.Promise<Note>() {
             @Override
             public void resolved(final Note data) {
+                EditActivity.this.playSound(Sounds.SUCCESS);
+                // Update the UI with the note retrieved from the data store
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -85,6 +104,7 @@ public class EditActivity extends GlassNotesActivity {
             @Override
             public void rejected(Throwable t) {
                 Log.e(TAG, getString(R.string.error_failed_to_get_note), t);
+                EditActivity.this.playSound(Sounds.ERROR);
             }
         });
 
@@ -98,13 +118,21 @@ public class EditActivity extends GlassNotesActivity {
      */
     void startSaveTimer() {
         mSaveTimer = new Timer();
-        mSaveTimer.schedule(new SaveTimerTask(), /* start after: */ Preferences.SAVE_PERIOD_MS, /* run every: */ Preferences.SAVE_PERIOD_MS);
+        mSaveTimer.schedule(new SaveTimerTask(),
+            /* start after: */ Preferences.SAVE_PERIOD_MS,
+            /* run every: */ Preferences.SAVE_PERIOD_MS);
     }
 
+    /**
+     * Saves the {@code mNote} to the data store
+     * @param notePromise the callback
+     */
     private void saveNote(GlassNotesDataStore.Promise<Note> notePromise) {
         // Only update the data store if the contents have changed
         String currentText = mNote.getContent();
         String updatedText = mNoteEditText.getText().toString();
+
+        // Only save to the data store if the contents have changed
         if (currentText.equals(updatedText)) {
             notePromise.resolved(mNote);
             return;
@@ -121,6 +149,7 @@ public class EditActivity extends GlassNotesActivity {
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (event.isCtrlPressed()) {
             if (keyCode == KeyEvent.KEYCODE_S) {
+                // ctrl-s is a simple save
                 saveNote(new GlassNotesDataStore.Promise<Note>() {
                     @Override
                     public void resolved(Note data) {
@@ -134,6 +163,7 @@ public class EditActivity extends GlassNotesActivity {
                 });
                 return true;
             } else if (keyCode == KeyEvent.KEYCODE_X) {
+                // ctrl-x is save and finish activity
                 saveAndFinish();
                 return true;
             }
@@ -160,10 +190,8 @@ public class EditActivity extends GlassNotesActivity {
         mSaveTimer.purge();
         mSaveTimer = null;
 
-        String contents = mNoteEditText.getText().toString();
-
         // Update the data model's mContent
-        mNote.setContent(contents);
+        mNote.setContent(mNoteEditText.getText().toString());
 
         saveNote(new GlassNotesGitHubAPIClient.Promise<Note>() {
             @Override
@@ -186,6 +214,10 @@ public class EditActivity extends GlassNotesActivity {
     private class SaveTimerTask extends TimerTask {
         @Override
         public void run() {
+            if (mSaveInProgress) {
+                return;
+            }
+
             saveNote(new GlassNotesGitHubAPIClient.Promise<Note>() {
                 @Override
                 public void resolved(Note data) {

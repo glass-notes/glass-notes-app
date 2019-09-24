@@ -23,6 +23,7 @@
                 android:resource="@xml/voice_trigger" />
         </activity>
         <activity android:name=".activities.EditActivity" />
+        <activity android:name=".activities.GlassNotesActivity" />
     </application>
 
     <uses-permission android:name="android.permission.INTERNET" />

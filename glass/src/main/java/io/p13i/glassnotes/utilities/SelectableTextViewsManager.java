@@ -146,6 +146,12 @@ public class SelectableTextViewsManager {
     }
 
     public interface OnTextViewSelectedListener {
+
+        /**
+         * Handles selection of a text view
+         * @param textView the selected text view
+         * @return whether or not the text view was handled by this method
+         */
         boolean onTextViewSelected(TextView textView);
     }
 }
