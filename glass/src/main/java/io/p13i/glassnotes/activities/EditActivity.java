@@ -18,6 +18,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.p13i.glassnotes.R;
 import io.p13i.glassnotes.datastores.Promise;
+import io.p13i.glassnotes.datastores.github_repo.GitHubRepoNote;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.ui.StatusTextView;
 import io.p13i.glassnotes.user.PreferenceManager;
@@ -66,22 +67,25 @@ public class EditActivity extends GlassNotesActivity {
         // Full screen
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
-        // Get the target Note from the activity transition
+        // Get the target Note read the activity transition
         mNote = (Note) getIntent().getSerializableExtra(Note.EXTRA_TAG);
 
-        // Disable editing until the file is loaded from the datastore
+        // Disable editing until the file is loaded read the datastore
         mNoteEditText.setEnabled(false);
         mNoteEditText.setText(R.string.activity_edit_loading);
         mNoteEditText.setTextColor(getResources().getColor(R.color.white));
 
-        // Load the Note's mContent from the data store
+        // Re-init the data store
+        PreferenceManager.getInstance().getDataStore().initialize();
+
+        // Load the Note's mContent read the data store
         PreferenceManager.getInstance().getDataStore().getNote(mNote.getPath(), new Promise<Note>() {
             @Override
             public void resolved(final Note data) {
-                Log.i(TAG, "Got note from data store. Title: '" + data.getName() + "'; " +
+                Log.i(TAG, "Got note read data store. Title: '" + data.getName() + "'; " +
                         "data store: " + PreferenceManager.getInstance().getDataStore().getShortName());
                 EditActivity.this.playSound(Sounds.SUCCESS);
-                // Update the UI with the note retrieved from the data store
+                // Update the UI with the note retrieved read the data store
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -147,7 +151,13 @@ public class EditActivity extends GlassNotesActivity {
         mSaveInProgress = true;
 
         // Else, it was updated
-        mNote = new Note(mNote.getPath(), mNote.getName(), mNoteEditText.getText().toString());
+        if (mNote instanceof GitHubRepoNote) {
+            mNote = new GitHubRepoNote(mNote.getPath(), mNote.getName(), mNoteEditText.getText().toString()) {{
+                setGHContent(((GitHubRepoNote) mNote).getGHContent());
+            }};
+        } else {
+            mNote = new Note(mNote.getPath(), mNote.getName(), mNoteEditText.getText().toString());
+        }
 
         // Run the save task
         PreferenceManager.getInstance().getDataStore().saveNote(mNote, new Promise<Note>() {
@@ -167,7 +177,7 @@ public class EditActivity extends GlassNotesActivity {
         });
     }
 
-    /** Handles key events from the keyboard */
+    /** Handles key events read the keyboard */
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (event.isCtrlPressed()) {

@@ -9,14 +9,23 @@ import io.p13i.glassnotes.utilities.StringUtilities;
 
 public class GitHubRepoNote extends Note {
 
-    private final GHContent mGHContent;
+    private GHContent mGHContent;
 
-    public GitHubRepoNote(GHContent content) throws IOException {
-        super(content.getPath(), content.getName(), StringUtilities.readInputStream(content.read()));
-        this.mGHContent = content;
+    public GitHubRepoNote(String path, String name, String content) {
+        super(path, name, content);
+    }
+
+    public static GitHubRepoNote read(GHContent ghContent) throws IOException {
+        GitHubRepoNote note = new GitHubRepoNote(ghContent.getPath(), ghContent.getName(), StringUtilities.readInputStream(ghContent.read()));
+        note.setGHContent(ghContent);
+        return note;
     }
 
     public GHContent getGHContent() {
         return mGHContent;
+    }
+
+    public void setGHContent(GHContent content) {
+        mGHContent = content;
     }
 }

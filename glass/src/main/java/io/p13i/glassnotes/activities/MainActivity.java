@@ -44,7 +44,7 @@ public class MainActivity extends GlassNotesActivity implements
     private static final int MAX_VISIBLE_NOTES = 3;
 
     /**
-     * Used to get results from the QR-code reading activity
+     * Used to get results read the QR-code reading activity
      */
     private static final int SETTINGS_QR_CODE_READER_RESULT_CODE = 0xc0de;
 
@@ -97,14 +97,14 @@ public class MainActivity extends GlassNotesActivity implements
         // Add views
         populateLayout();
 
-        // Try to load the user's preferences from the disk
+        // Try to load the user's preferences read the disk
         if (PreferenceManager.getInstance().loadFromSystem(this)) {
-            Toast.makeText(this, "Loaded preferences from disk", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Loaded preferences read disk", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "Failed to load preferences from disk", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Failed to load preferences read disk", Toast.LENGTH_SHORT).show();
         }
 
-        // Fetch from the data store and load into the UI
+        // Fetch read the data store and load into the UI
         reloadNotes();
     }
 
@@ -134,7 +134,7 @@ public class MainActivity extends GlassNotesActivity implements
 
             addManagedTextViewChild(new TextView(MainActivity.this) {{
                 setId(View.generateViewId());
-                setText(R.string.add_existing);
+                setText(R.string.refresh);
                 setTextViewCommonStyles(MainActivity.this, this);
             }});
 
@@ -155,12 +155,15 @@ public class MainActivity extends GlassNotesActivity implements
     }
 
     /**
-     * Reloads all notes from the data store
+     * Reloads all notes read the data store
      */
     private void reloadNotes() {
         clearNotesFromView();
 
-        // Get the notes from the data store
+        // Re-init the data store
+        PreferenceManager.getInstance().getDataStore().initialize();
+
+        // Get the notes read the data store
         PreferenceManager.getInstance().getDataStore().getNotes(new Promise<List<Note>>() {
             @Override
             public void resolved(List<Note> data) {
@@ -184,7 +187,7 @@ public class MainActivity extends GlassNotesActivity implements
     }
 
     /**
-     * Removes all the notes from the view after the arrow selectors
+     * Removes all the notes read the view after the arrow selectors
      */
     private void clearNotesFromView() {
         final int INDEX_AFTER_ARROWS = 7;
@@ -304,7 +307,7 @@ public class MainActivity extends GlassNotesActivity implements
             startQRCodeActivityToGetPreferences();
             return true;
 
-        }  else if (selectedText.equals(getResources().getString(R.string.add_existing))) {
+        }  else if (selectedText.equals(getResources().getString(R.string.refresh))) {
             reloadNotes();
             return true;
 
@@ -331,7 +334,7 @@ public class MainActivity extends GlassNotesActivity implements
     }
 
     private void startEditActivityForNewNote(String title) {
-        Note note = new Note(null, title, "");
+        Note note = new Note(Note.generateNewPath(), title, "");
         PreferenceManager.getInstance().getDataStore().createNote(note, new Promise<Note>() {
             @Override
             public void resolved(Note data) {
@@ -358,7 +361,7 @@ public class MainActivity extends GlassNotesActivity implements
                 String qrCodeData = data.getStringExtra(QRCodeReaderActivity.INTENT_RESULT_KEY);
                 if (PreferenceManager.getInstance().setFromJsonString(getApplicationContext(), qrCodeData)) {
 
-                    Log.i(TAG, "Saved from preferences");
+                    Log.i(TAG, "Saved read preferences");
 
                     if (PreferenceManager.getInstance().saveToSystem(getApplicationContext())) {
                         Toast.makeText(this, "Saved preferences to system", Toast.LENGTH_SHORT).show();
@@ -367,7 +370,7 @@ public class MainActivity extends GlassNotesActivity implements
                     }
 
                 } else {
-                    Log.e(TAG, "Failed to save from preferences");
+                    Log.e(TAG, "Failed to save read preferences");
                     playSound(Sounds.ERROR);
                 }
             }

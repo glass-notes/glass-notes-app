@@ -26,8 +26,6 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
 
     public LocalDiskGlassNotesDataStore(Context context) {
         mContext = context;
-
-        Assert.that(isExternalStorageWritable());
     }
 
     /**
@@ -94,6 +92,12 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
     @Override
     public String getShortName() {
         return "LocalDisk";
+    }
+
+    @Override
+    public void initialize() {
+        Assert.that(isExternalStorageWritable());
+        Log.i(TAG, "Initialized " + LocalDiskGlassNotesDataStore.class.getSimpleName());
     }
 
     @Override

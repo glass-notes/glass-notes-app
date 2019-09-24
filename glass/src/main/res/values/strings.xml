@@ -4,7 +4,7 @@
     <string name="create_new_note">Create new note    →</string>
     <string name="add_new_todo">Add new TODO       →</string>
     <string name="load_settings">Load settings →</string>
-    <string name="add_existing">Current notes: (refresh)</string>
+    <string name="refresh">Current notes: (refresh)</string>
     <string name="activity_edit_loading">Loading...</string>
     <string name="activity_edit_saving_existing">Saving/exiting...</string>
     <string name="error_failed_to_save_note">Failed to save gist.</string>

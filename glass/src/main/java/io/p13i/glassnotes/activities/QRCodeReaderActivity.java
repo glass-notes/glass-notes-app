@@ -27,7 +27,7 @@ import net.sourceforge.zbar.Config;
 import java.util.Iterator;
 
 /**
- * Reads a QR code from the camera.
+ * Reads a QR code read the camera.
  * Based on https://github.com/jzplusplus/GlassWifiConnect/blob/96d8d67f79c209e204d5b728498cd4899c2640c0/src/com/jzplusplus/glasswificonnect/MainActivity.java
  */
 public class QRCodeReaderActivity extends GlassNotesActivity {
@@ -100,12 +100,13 @@ public class QRCodeReaderActivity extends GlassNotesActivity {
 
         mCameraPreviewFrameLayout.addView(mCameraPreview);
 
-//        controlInflater = LayoutInflater.from(getBaseContext());
-//        View viewControl = controlInflater.inflate(R.layout.qr_code_reader_bounding_box, null);
-//        WindowManager.LayoutParams layoutParamsControl
-//                = new WindowManager.LayoutParams(WindowManager.LayoutParams.FILL_PARENT,
-//                WindowManager.LayoutParams.FILL_PARENT);
-//        this.addContentView(viewControl, layoutParamsControl);
+        controlInflater = LayoutInflater.from(getBaseContext());
+        View viewControl = controlInflater.inflate(R.layout.qr_code_reader_bounding_box, null);
+        WindowManager.LayoutParams layoutParamsControl
+                = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.FILL_PARENT,
+                    WindowManager.LayoutParams.FILL_PARENT);
+        this.addContentView(viewControl, layoutParamsControl);
 
         super.onCreate(savedInstanceState);
     }

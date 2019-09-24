@@ -7,10 +7,11 @@ import org.kohsuke.github.GHContent;
 import java.io.IOException;
 import java.io.Serializable;
 
+import io.p13i.glassnotes.utilities.DateUtilities;
 import io.p13i.glassnotes.utilities.StringUtilities;
 
 public class Note implements Serializable {
-    public static final String DEFAULT_CONTENT = "- ";
+    public static final String MARKDOWN_EXTENSION = ".md";
     public static final String EXTRA_TAG = Note.class.getName();
 
     @SerializedName("path")
@@ -26,6 +27,10 @@ public class Note implements Serializable {
         mPath = path;
         mName = name;
         mContent = content;
+    }
+
+    public static String generateNewPath() {
+        return DateUtilities.timestamp() + MARKDOWN_EXTENSION;
     }
 
     public String getPath() {

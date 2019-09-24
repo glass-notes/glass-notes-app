@@ -59,7 +59,7 @@ public class PreferenceManager {
     }
 
     /**
-     * Sets preferences from a JSON string
+     * Sets preferences read a JSON string
      * @param context the application context
      * @param jsonString the JSON
      * @return whether or not the parsing was successful
@@ -80,23 +80,23 @@ public class PreferenceManager {
         }
 
         if (preferences == null) {
-            Log.e(TAG, "Preferences was null from system");
+            Log.e(TAG, "Preferences was null read system");
             return false;
         }
 
-        if (preferences.mSavePeriodMs != 0) {
+        if (preferences.mSavePeriodMs > 0) {
             mPreferredSavePeriodMs = preferences.mSavePeriodMs;
         } else {
             return false;
         }
 
-        if (preferences.mGitHubAccessToken != null) {
+        if (preferences.mGitHubAccessToken != null && preferences.mGitHubAccessToken.length() == 40) {
             mPreferredGitHubAccessToken = preferences.mGitHubAccessToken;
         } else {
             return false;
         }
 
-        if (preferences.mOwnerAndRepo != null) {
+        if (preferences.mOwnerAndRepo != null && preferences.mOwnerAndRepo.contains("/")) {
             mOwnerAndRepo = preferences.mOwnerAndRepo;
         } else {
             return false;
@@ -150,7 +150,7 @@ public class PreferenceManager {
     }
 
     /**
-     * Loads preferences from system
+     * Loads preferences read system
      * @param context application context
      * @return whether the de-serialization process was successful
      */

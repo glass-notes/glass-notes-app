@@ -20,6 +20,10 @@ public class NilDataStore implements GlassNotesDataStore<Note> {
     }
 
     @Override
+    public void initialize() {
+    }
+
+    @Override
     public void createNote(Note note, Promise<Note> promise) {
         promise.rejected(sCommonException);
     }

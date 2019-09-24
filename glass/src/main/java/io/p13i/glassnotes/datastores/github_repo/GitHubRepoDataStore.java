@@ -22,17 +22,10 @@ public class GitHubRepoDataStore implements GlassNotesDataStore<GitHubRepoNote> 
     private GitHub mGitHub;
     private GHRepository mRepo;
     private String mOwnerAndRepo;
+    private String mGitHubToken;
 
     public GitHubRepoDataStore(String githubToken, String ownerAndRepo) {
-        try {
-            this.mGitHub = GitHub.connectUsingOAuth(githubToken);
-            this.mRepo = mGitHub.getRepository(mOwnerAndRepo);
-        } catch (Exception e) {
-            Log.e(TAG, "Failed to connectUsingOAuth or getRepository", e);
-            this.mGitHub = null;
-            this.mRepo = null;
-            this.mConstructorException = e;
-        }
+        this.mGitHubToken = githubToken;
         this.mOwnerAndRepo = ownerAndRepo;
     }
 
@@ -42,9 +35,24 @@ public class GitHubRepoDataStore implements GlassNotesDataStore<GitHubRepoNote> 
     }
 
     @Override
+    public void initialize() {
+        try {
+            this.mGitHub = GitHub.connectUsingOAuth(mGitHubToken);
+            this.mRepo = mGitHub.getRepository(mOwnerAndRepo);
+            Log.i(TAG, "Initialized " + GitHubRepoDataStore.class.getSimpleName());
+        } catch (Exception e) {
+            Log.i(TAG, "Failed to connectUsingOAuth or getRepository", e);
+            this.mGitHub = null;
+            this.mRepo = null;
+            this.mConstructorException = e;
+        }
+    }
+
+    @Override
     public void createNote(Note note, Promise<Note> promise) {
         if (this.mRepo == null) {
             promise.rejected(mConstructorException);
+            return;
         }
 
         try {
@@ -55,7 +63,7 @@ public class GitHubRepoDataStore implements GlassNotesDataStore<GitHubRepoNote> 
                     .commit()
                     .getContent();
 
-            promise.resolved(new GitHubRepoNote(content));
+            promise.resolved(GitHubRepoNote.read(content));
 
         } catch (IOException e) {
             promise.rejected(e);
@@ -74,7 +82,7 @@ public class GitHubRepoDataStore implements GlassNotesDataStore<GitHubRepoNote> 
 
             List<Note> result = new LinkedList<Note>();
             for (GHContent content : contentList) {
-                result.add(new GitHubRepoNote(content));
+                result.add(GitHubRepoNote.read(content));
             }
 
             promise.resolved(result);
@@ -94,7 +102,7 @@ public class GitHubRepoDataStore implements GlassNotesDataStore<GitHubRepoNote> 
         try {
             GHContent content = mRepo.getFileContent(path);
 
-            promise.resolved(new GitHubRepoNote(content));
+            promise.resolved(GitHubRepoNote.read(content));
 
         } catch (IOException e) {
             promise.rejected(e);
@@ -107,7 +115,7 @@ public class GitHubRepoDataStore implements GlassNotesDataStore<GitHubRepoNote> 
             GHContent content = ((GitHubRepoNote) note).getGHContent()
                 .update(note.getContent(), DateUtilities.timestamp())
                 .getContent();
-            promise.resolved(new GitHubRepoNote(content));
+            promise.resolved(GitHubRepoNote.read(content));
         } catch (IOException e) {
             promise.rejected(e);
         } catch (ClassCastException e) {

@@ -4,12 +4,25 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:gravity="center">
-    <FrameLayout
+    <LinearLayout
         android:id="@+id/takepicture"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:text=""
-        android:background="@drawable/bounding_box"
-        android:layout_gravity="center"
-        android:layout_margin="10dp"/>
+        android:layout_width="640px"
+        android:layout_height="360px"
+        android:orientation="vertical"
+        android:layout_gravity="center">
+
+        <ImageView
+            android:layout_width="300px"
+            android:layout_height="300px"
+            android:layout_marginLeft="170px"
+            android:layout_marginTop="30px"
+            android:src="@drawable/bounding_box" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:textColor="@color/white"
+            android:text="Scan a QR code"/>
+    </LinearLayout>
 </LinearLayout>

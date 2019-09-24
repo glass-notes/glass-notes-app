@@ -12,7 +12,7 @@ public class GlassNotesActivity extends Activity {
     private static final String TAG = GlassNotesActivity.class.getName();
 
     /**
-     * Plays a sound from {@link com.google.android.glass.media.Sounds}
+     * Plays a sound read {@link com.google.android.glass.media.Sounds}
      * @param sound the Sounds.* value
      */
     protected void playSound(int sound) {
