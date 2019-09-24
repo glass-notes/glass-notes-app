@@ -34,7 +34,10 @@ import io.p13i.glassnotes.utilities.LimitedViewItemManager;
 import io.p13i.glassnotes.utilities.SelectableTextViewsManager;
 
 
-public class MainActivity extends Activity implements SelectableTextViewsManager.OnTextViewSelectedListener {
+public class MainActivity extends Activity implements
+        SelectableTextViewsManager.OnTextViewSelectedListener,
+        android.view.GestureDetector.OnGestureListener,
+        android.view.GestureDetector.OnDoubleTapListener {
 
     private final static String TAG = MainActivity.class.getName();
 
@@ -308,5 +311,69 @@ public class MainActivity extends Activity implements SelectableTextViewsManager
     public void playSound(int sound) {
         AudioManager audio = (AudioManager) this.getSystemService(Context.AUDIO_SERVICE);
         audio.playSoundEffect(sound);
+    }
+
+    private android.view.GestureDetector mDetector;
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event){
+        if (this.mDetector.onTouchEvent(event)) {
+            return true;
+        }
+        return super.onTouchEvent(event);
+    }
+
+    @Override
+    public boolean onDown(MotionEvent event) {
+        Log.d(TAG,"onDown: " + event.toString());
+        return true;
+    }
+
+    @Override
+    public boolean onFling(MotionEvent event1, MotionEvent event2,
+                           float velocityX, float velocityY) {
+        Log.d(TAG, "onFling: " + event1.toString() + event2.toString());
+        return true;
+    }
+
+    @Override
+    public void onLongPress(MotionEvent event) {
+        Log.d(TAG, "onLongPress: " + event.toString());
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent event1, MotionEvent event2, float distanceX,
+                            float distanceY) {
+        Log.d(TAG, "onScroll: " + event1.toString() + event2.toString());
+        return true;
+    }
+
+    @Override
+    public void onShowPress(MotionEvent event) {
+        Log.d(TAG, "onShowPress: " + event.toString());
+    }
+
+    @Override
+    public boolean onSingleTapUp(MotionEvent event) {
+        Log.d(TAG, "onSingleTapUp: " + event.toString());
+        return true;
+    }
+
+    @Override
+    public boolean onDoubleTap(MotionEvent event) {
+        Log.d(TAG, "onDoubleTap: " + event.toString());
+        return true;
+    }
+
+    @Override
+    public boolean onDoubleTapEvent(MotionEvent event) {
+        Log.d(TAG, "onDoubleTapEvent: " + event.toString());
+        return true;
+    }
+
+    @Override
+    public boolean onSingleTapConfirmed(MotionEvent event) {
+        Log.d(TAG, "onSingleTapConfirmed: " + event.toString());
+        return true;
     }
 }
