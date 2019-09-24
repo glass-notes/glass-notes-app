@@ -22,6 +22,8 @@ import com.google.android.glass.touchpad.GestureDetector;
 import java.util.Date;
 import java.util.List;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import io.p13i.glassnotes.R;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
@@ -38,7 +40,9 @@ public class MainActivity extends GlassNotesActivity implements
 
     private final static String TAG = MainActivity.class.getName();
 
+    @BindView(R.id.activity_edit_status)
     StatusTextView mStatusTextView;
+    @BindView(R.id.activity_main_layout)
     LinearLayout mLinearLayout;
     GestureDetector mGestureDetector;
     SelectableTextViewsManager mSelectableTextViewsManager;
@@ -56,8 +60,7 @@ public class MainActivity extends GlassNotesActivity implements
 
         // Bind to views
         setContentView(R.layout.activity_main);
-        mStatusTextView = (StatusTextView) findViewById(R.id.activity_edit_status);
-        mLinearLayout = (LinearLayout) findViewById(R.id.activity_main_layout);
+        ButterKnife.bind(this);
 
         // Key the screen on
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);

@@ -13,6 +13,8 @@ import com.google.android.glass.media.Sounds;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import io.p13i.glassnotes.R;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
@@ -29,8 +31,10 @@ public class EditActivity extends GlassNotesActivity {
 
     public final static String TAG = EditActivity.class.getName();
 
+    @BindView(R.id.activity_edit_status)
     StatusTextView mStatusTextView;
 
+    @BindView(R.id.note_edit_text)
     EditText mNoteEditText;
 
     private Note mNote;
@@ -46,8 +50,7 @@ public class EditActivity extends GlassNotesActivity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
         setContentView(R.layout.activity_edit);
-        mStatusTextView = (StatusTextView) findViewById(R.id.activity_edit_status);
-        mNoteEditText = (EditText) findViewById(R.id.note_edit_text);
+        ButterKnife.bind(this);
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
