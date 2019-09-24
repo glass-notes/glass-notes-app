@@ -356,11 +356,16 @@ public class MainActivity extends GlassNotesActivity implements
         if (requestCode == SETTINGS_QR_CODE_READER_RESULT_CODE) {
             if (resultCode == RESULT_OK) {
                 String qrCodeData = data.getStringExtra(QRCodeReaderActivity.INTENT_RESULT_KEY);
-                if (PreferenceManager.getInstance().setFromJsonString(this, qrCodeData)) {
+                if (PreferenceManager.getInstance().setFromJsonString(getApplicationContext(), qrCodeData)) {
+
                     Log.i(TAG, "Saved from preferences");
-                    PreferenceManager.getInstance().saveToSystem(this);
-                    playSound(Sounds.SUCCESS);
-                    reloadNotes();
+
+                    if (PreferenceManager.getInstance().saveToSystem(getApplicationContext())) {
+                        Toast.makeText(this, "Saved preferences to system", Toast.LENGTH_SHORT).show();
+                        playSound(Sounds.SUCCESS);
+                        reloadNotes();
+                    }
+
                 } else {
                     Log.e(TAG, "Failed to save from preferences");
                     playSound(Sounds.ERROR);
