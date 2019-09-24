@@ -4,16 +4,19 @@ import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
 
+/**
+ * Represents a file in a {@code Gist}
+ */
 public class File implements Serializable {
     @SerializedName("filename")
-    public String mFilename;
+    protected String mFilename;
 
     @SerializedName("size")
-    public Integer size;
+    protected Integer size;
 
     @SerializedName("raw_url")
-    public String rawUrl;
+    protected String rawUrl;
 
     @SerializedName("content")
-    public String mContent;
+    protected String mContent;
 }
