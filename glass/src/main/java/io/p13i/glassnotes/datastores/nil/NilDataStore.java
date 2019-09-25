@@ -24,6 +24,11 @@ public class NilDataStore implements GlassNotesDataStore<Note> {
     }
 
     @Override
+    public Note generateNewNote(String title) {
+        return null;
+    }
+
+    @Override
     public void createNote(Note note, Promise<Note> promise) {
         promise.rejected(sCommonException);
     }
@@ -34,7 +39,7 @@ public class NilDataStore implements GlassNotesDataStore<Note> {
     }
 
     @Override
-    public void getNote(String id, Promise<Note> promise) {
+    public void getNote(String path, Promise<Note> promise) {
         promise.rejected(sCommonException);
     }
 

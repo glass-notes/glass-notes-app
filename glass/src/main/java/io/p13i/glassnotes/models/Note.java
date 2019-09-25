@@ -1,13 +1,15 @@
 package io.p13i.glassnotes.models;
 
+import android.content.Context;
+
 import com.google.gson.annotations.SerializedName;
 
-import org.kohsuke.github.GHContent;
-
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 
 import io.p13i.glassnotes.utilities.DateUtilities;
+import io.p13i.glassnotes.utilities.FileIO;
 import io.p13i.glassnotes.utilities.StringUtilities;
 
 public class Note implements Serializable {
@@ -23,21 +25,25 @@ public class Note implements Serializable {
     @SerializedName("content")
     public String mContent;
 
+    public Note(File file) {
+        this.mPath = file.getAbsolutePath();
+        this.mName = file.getName();
+        this.mContent = FileIO.read(file);
+    }
+
     public Note(String path, String name, String content) {
         mPath = path;
         mName = name;
         mContent = content;
     }
 
-    public static String generateNewPath() {
-        return DateUtilities.timestamp() + MARKDOWN_EXTENSION;
-    }
-
     public String getPath() {
         return mPath;
     }
 
-    public String getName() { return mName; }
+    public String getName() {
+        return mName;
+    }
 
     public String getContent() {
         return mContent;

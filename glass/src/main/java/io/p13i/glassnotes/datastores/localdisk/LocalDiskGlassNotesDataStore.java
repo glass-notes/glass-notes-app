@@ -4,20 +4,22 @@ import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
 
-import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
-import java.util.UUID;
 
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
 import io.p13i.glassnotes.datastores.Promise;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.utilities.Assert;
+import io.p13i.glassnotes.utilities.DateUtilities;
+import io.p13i.glassnotes.utilities.FileIO;
 
 public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
     private static final String TAG = LocalDiskGlassNotesDataStore.class.getName();
@@ -47,12 +49,17 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
     private File getStorageDirectory() {
         // Get the directory for the app's private pictures directory.
         File file = new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "glass-notes");
-        Log.i(TAG, file.mkdir() ? "Directory created" : "Directory not created");
+        Log.i(TAG, file.mkdirs() ? "Directories created" : "Directories not created");
         return file;
     }
 
+    @Override
+    public Note generateNewNote(String title) {
+        return new Note(getStorageDirectory() + File.separator + DateUtilities.timestamp() + Note.MARKDOWN_EXTENSION, title, "");
+    }
+
     private void write(String toFile, String data) {
-        File file = new File(getStorageDirectory(), toFile);
+        File file = new File(toFile);
 
         try {
             file.createNewFile();
@@ -85,10 +92,6 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
         return new String(bytes);
     }
 
-    private static String generateTemporaryId() {
-        return "TEMP-" + UUID.randomUUID().toString();
-    }
-
     @Override
     public String getShortName() {
         return "LocalDisk";
@@ -102,8 +105,7 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
 
     @Override
     public void createNote(Note note, Promise<Note> promise) {
-        Note newNote = new Note(note.getPath(), generateTemporaryId(), note.getContent());
-        write(newNote.getPath(), new Gson().toJson(note));
+        write(note.getPath(), note.getContent());
         promise.resolved(note);
     }
 
@@ -112,26 +114,31 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
 
         List<Note> notes = new ArrayList<Note>();
         File[] files = getStorageDirectory().listFiles();
+        Arrays.sort(files, new Comparator<File>() {
+            @Override
+            public int compare(File lhs, File rhs) {
+                if (lhs.lastModified() == rhs.lastModified()) {
+                    return 0;
+                }
+                return lhs.lastModified() < rhs.lastModified() ? -1 : 1;
+            }
+        });
         for (File noteFile : files) {
-            notes.add(new Gson().fromJson(read(noteFile), Note.class));
+            notes.add(new Note(noteFile));
         }
 
         promise.resolved(notes);
     }
 
     @Override
-    public void getNote(String id, Promise<Note> promise) {
-        String fileContents = read(id);
-        if (fileContents == null) {
-            promise.rejected(new Throwable());
-        }
-        Note note = new Gson().fromJson(fileContents, Note.class);
-        promise.resolved(note);
+    public void getNote(String path, Promise<Note> promise) {
+        File noteFile = new File(path);
+        promise.resolved(new Note(noteFile.getAbsolutePath(), noteFile.getName(), FileIO.read(noteFile)));
     }
 
     @Override
     public void saveNote(Note note, Promise<Note> promise) {
-        write(note.getPath(), new Gson().toJson(note));
+        write(note.getPath(), note.getContent());
         promise.resolved(note);
     }
 }

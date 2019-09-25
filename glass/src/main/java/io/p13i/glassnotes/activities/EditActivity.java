@@ -18,7 +18,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.p13i.glassnotes.R;
 import io.p13i.glassnotes.datastores.Promise;
-import io.p13i.glassnotes.datastores.github_repo.GitHubRepoNote;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.ui.StatusTextView;
 import io.p13i.glassnotes.user.PreferenceManager;
@@ -151,13 +150,7 @@ public class EditActivity extends GlassNotesActivity {
         mSaveInProgress = true;
 
         // Else, it was updated
-        if (mNote instanceof GitHubRepoNote) {
-            mNote = new GitHubRepoNote(mNote.getPath(), mNote.getName(), mNoteEditText.getText().toString()) {{
-                setGHContent(((GitHubRepoNote) mNote).getGHContent());
-            }};
-        } else {
-            mNote = new Note(mNote.getPath(), mNote.getName(), mNoteEditText.getText().toString());
-        }
+        mNote = new Note(mNote.getPath(), mNote.getName(), mNoteEditText.getText().toString());
 
         // Run the save task
         PreferenceManager.getInstance().getDataStore().saveNote(mNote, new Promise<Note>() {

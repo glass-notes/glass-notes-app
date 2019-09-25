@@ -334,7 +334,7 @@ public class MainActivity extends GlassNotesActivity implements
     }
 
     private void startEditActivityForNewNote(String title) {
-        Note note = new Note(Note.generateNewPath(), title, "");
+        Note note = PreferenceManager.getInstance().getDataStore().generateNewNote(title);
         PreferenceManager.getInstance().getDataStore().createNote(note, new Promise<Note>() {
             @Override
             public void resolved(Note data) {

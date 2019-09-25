@@ -10,8 +10,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
-import io.p13i.glassnotes.datastores.github_repo.GitHubRepoDataStore;
-import io.p13i.glassnotes.datastores.synced.GitHubOfflineSyncingDataStore;
 import io.p13i.glassnotes.datastores.localdisk.LocalDiskGlassNotesDataStore;
 import io.p13i.glassnotes.datastores.nil.NilDataStore;
 
@@ -84,32 +82,12 @@ public class PreferenceManager {
             return false;
         }
 
-        if (preferences.mSavePeriodMs > 0) {
-            mPreferredSavePeriodMs = preferences.mSavePeriodMs;
-        } else {
-            return false;
-        }
-
-        if (preferences.mGitHubAccessToken != null && preferences.mGitHubAccessToken.length() == 40) {
-            mPreferredGitHubAccessToken = preferences.mGitHubAccessToken;
-        } else {
-            return false;
-        }
-
-        if (preferences.mOwnerAndRepo != null && preferences.mOwnerAndRepo.contains("/")) {
-            mOwnerAndRepo = preferences.mOwnerAndRepo;
-        } else {
-            return false;
-        }
+        mPreferredSavePeriodMs = preferences.mSavePeriodMs;
+        mPreferredGitHubAccessToken = preferences.mGitHubAccessToken;
+        mOwnerAndRepo = preferences.mOwnerAndRepo;
 
         if (preferences.mDataStoreName != null) {
-            if (preferences.mDataStoreName.equals(GitHubOfflineSyncingDataStore.class.getSimpleName())) {
-                mPreferredDataStore = new GitHubOfflineSyncingDataStore(context, mPreferredGitHubAccessToken, mOwnerAndRepo);
-
-            } else if (preferences.mDataStoreName.equals(GitHubRepoDataStore.class.getSimpleName())) {
-                mPreferredDataStore = new GitHubRepoDataStore(mOwnerAndRepo, mPreferredGitHubAccessToken);
-
-            } else if (preferences.mDataStoreName.equals(LocalDiskGlassNotesDataStore.class.getSimpleName())) {
+            if (preferences.mDataStoreName.equals(LocalDiskGlassNotesDataStore.class.getSimpleName())) {
                 mPreferredDataStore = new LocalDiskGlassNotesDataStore(context);
 
             } else {
