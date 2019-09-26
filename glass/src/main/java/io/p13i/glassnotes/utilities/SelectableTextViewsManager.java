@@ -123,13 +123,13 @@ public class SelectableTextViewsManager {
         mSelectedTextView = newSelectedTextView;
     }
 
-    private TextView getSelectedTextView() {
+    public TextView getSelectedTextView() {
         return mSelectedTextView;
     }
 
     private TextView mSelectedTextView;
 
-    protected void init() {
+    public void init() {
         setSelectedTextView(mTextViews.get(0));
         for (int i = 1; i < mTextViews.size(); i++) {
             removeUnderline(mTextViews.get(i));

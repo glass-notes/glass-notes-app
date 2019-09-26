@@ -15,21 +15,7 @@ public class NilDataStore implements GlassNotesDataStore<Note> {
     private static Throwable sCommonException = new RuntimeException("You're using the " + NilDataStore.class.getSimpleName());
 
     @Override
-    public String getShortName() {
-        return "Nil";
-    }
-
-    @Override
-    public void initialize() {
-    }
-
-    @Override
-    public Note generateNewNote(String title) {
-        return null;
-    }
-
-    @Override
-    public void createNote(Note note, Promise<Note> promise) {
+    public void createNote(String title, Promise<Note> promise) {
         promise.rejected(sCommonException);
     }
 
@@ -45,6 +31,11 @@ public class NilDataStore implements GlassNotesDataStore<Note> {
 
     @Override
     public void saveNote(Note note, Promise<Note> promise) {
+        promise.rejected(sCommonException);
+    }
+
+    @Override
+    public void deleteNote(Note note, Promise<Boolean> promise) {
         promise.rejected(sCommonException);
     }
 }

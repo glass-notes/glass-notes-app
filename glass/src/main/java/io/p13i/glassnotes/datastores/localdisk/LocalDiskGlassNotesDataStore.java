@@ -7,23 +7,24 @@ import android.util.Log;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
+import io.p13i.glassnotes.datastores.GlassNotesDataStoreException;
 import io.p13i.glassnotes.datastores.Promise;
 import io.p13i.glassnotes.models.Note;
-import io.p13i.glassnotes.utilities.Assert;
-import io.p13i.glassnotes.utilities.DateUtilities;
 import io.p13i.glassnotes.utilities.FileIO;
 
 public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
     private static final String TAG = LocalDiskGlassNotesDataStore.class.getName();
+    private static final String LOCAL_STORAGE_DIRECTORY = "glass-notes";
 
     private Context mContext;
 
     public LocalDiskGlassNotesDataStore(Context context) {
+        if (!isExternalStorageWritable()) {
+            throw new GlassNotesDataStoreException("External storage must be writable.");
+        }
         mContext = context;
     }
 
@@ -31,7 +32,7 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
      * Checks if external storage is available for read and write
      * https://developer.android.com/training/data-storage/files#CheckExternalAvail
      *
-     * @return
+     * @return whether or not the storage is writable
      */
     private boolean isExternalStorageWritable() {
         return Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED);
@@ -40,53 +41,38 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
     /**
      * https://developer.android.com/training/data-storage/files#PrivateFiles
      *
-     * @return
+     * @return the storage directory for this application
      */
     private File getStorageDirectory() {
         // Get the directory for the app's private pictures directory.
-        File file = new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "glass-notes");
-        Log.i(TAG, file.mkdirs() ? "Directories created" : "Directories not created");
+        File file = new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), LOCAL_STORAGE_DIRECTORY);
+        Log.i(TAG, (file.mkdirs() ? "Directories created" : "Directories not created") + " for path " + file.getAbsolutePath());
         return file;
     }
 
     @Override
-    public Note generateNewNote(String title) {
-        return new Note(getStorageDirectory() + File.separator + DateUtilities.timestamp() + Note.MARKDOWN_EXTENSION, title, "");
-    }
-
-    @Override
-    public String getShortName() {
-        return "LocalDisk";
-    }
-
-    @Override
-    public void initialize() {
-        Assert.that(isExternalStorageWritable());
-        Log.i(TAG, "Initialized " + LocalDiskGlassNotesDataStore.class.getSimpleName());
-    }
-
-    @Override
-    public void createNote(Note note, Promise<Note> promise) {
-        FileIO.write(note.getPath(), note.getContent());
-        promise.resolved(note);
+    public void createNote(String title, Promise<Note> promise) {
+        String filename = title + Note.MARKDOWN_EXTENSION;
+        String absoluteFilePath = new File(getStorageDirectory(),filename).getAbsolutePath();
+        String content = "";
+        FileIO.write(absoluteFilePath, content);
+        promise.resolved(new Note(absoluteFilePath, filename, content));
     }
 
     @Override
     public void getNotes(Promise<List<Note>> promise) {
 
         List<Note> notes = new ArrayList<Note>();
+
         File[] files = getStorageDirectory().listFiles();
-        Arrays.sort(files, new Comparator<File>() {
-            @Override
-            public int compare(File lhs, File rhs) {
-                if (lhs.lastModified() == rhs.lastModified()) {
-                    return 0;
-                }
-                return lhs.lastModified() < rhs.lastModified() ? -1 : 1;
-            }
-        });
+
         for (File noteFile : files) {
-            notes.add(new Note(noteFile));
+            if (noteFile.getName().endsWith(Note.MARKDOWN_EXTENSION)) {
+                notes.add(new Note(noteFile.getAbsolutePath(), noteFile.getName(), FileIO.read(noteFile)));
+                Log.i(TAG, "Added file " + noteFile.getAbsolutePath());
+            } else {
+                Log.i(TAG, "Skipping file " + noteFile.getAbsolutePath());
+            }
         }
 
         promise.resolved(notes);
@@ -100,7 +86,12 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
 
     @Override
     public void saveNote(Note note, Promise<Note> promise) {
-        FileIO.write(note.getPath(), note.getContent());
+        FileIO.write(note.getAbsoluteResourcePath(), note.getContent());
         promise.resolved(note);
+    }
+
+    @Override
+    public void deleteNote(Note note, Promise<Boolean> promise) {
+        promise.resolved(FileIO.delete(note.getAbsoluteResourcePath()));
     }
 }

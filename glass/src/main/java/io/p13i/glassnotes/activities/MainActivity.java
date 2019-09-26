@@ -24,6 +24,7 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.p13i.glassnotes.R;
+import io.p13i.glassnotes.datastores.GitHubAPISyncLocalDiskGlassNotesDataStore;
 import io.p13i.glassnotes.datastores.Promise;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.ui.StatusTextView;
@@ -160,8 +161,7 @@ public class MainActivity extends GlassNotesActivity implements
     private void reloadNotes() {
         clearNotesFromView();
 
-        // Re-init the data store
-        PreferenceManager.getInstance().getDataStore().initialize();
+        mStatusTextView.setStatus(PreferenceManager.getInstance().getDataStore().getClass().getSimpleName().substring(0, 15));
 
         // Get the notes read the data store
         PreferenceManager.getInstance().getDataStore().getNotes(new Promise<List<Note>>() {
@@ -169,7 +169,6 @@ public class MainActivity extends GlassNotesActivity implements
             public void resolved(List<Note> data) {
                 // Set status elements
                 mStatusTextView.setPageTitle("Welcome to GlassNotes!");
-                mStatusTextView.setStatus(PreferenceManager.getInstance().getDataStore().getShortName());
 
                 mNotes = data;
                 // Display the notes in the GUI
@@ -209,12 +208,13 @@ public class MainActivity extends GlassNotesActivity implements
                 public void run() {
                     mSelectableTextViewsManager.addManagedTextViewChild(new TextView(MainActivity.this) {{
                         setId(View.generateViewId());
-                        setText(note.getName());
+                        setText(note.getFilename().replace(Note.MARKDOWN_EXTENSION, ""));
                         setTextViewCommonStyles(MainActivity.this, this);
                     }});
                 }
             });
         }
+        mSelectableTextViewsManager.init();
     }
 
     /**
@@ -234,6 +234,9 @@ public class MainActivity extends GlassNotesActivity implements
         if (event.isCtrlPressed()) {
             if (keyCode == KeyEvent.KEYCODE_T) {
                 startQRCodeActivityToGetPreferences();
+                return true;
+            } else if (keyCode == KeyEvent.KEYCODE_DEL) {
+                deleteSelectedNote();
                 return true;
             }
         }
@@ -270,6 +273,22 @@ public class MainActivity extends GlassNotesActivity implements
         }
     }
 
+    private void deleteSelectedNote() {
+        Note note = getNoteWithTitle(mSelectableTextViewsManager.getSelectedTextView().getText().toString());
+        PreferenceManager.getInstance().getDataStore().deleteNote(note, new Promise() {
+            @Override
+            public void resolved(Object data) {
+                reloadNotes();
+                playSound(Sounds.SUCCESS);
+            }
+
+            @Override
+            public void rejected(Throwable t) {
+                playSound(Sounds.ERROR);
+            }
+        });
+    }
+
     private void startQRCodeActivityToGetPreferences() {
         Intent intent = new Intent(this, QRCodeReaderActivity.class);
         startActivityForResult(intent, SETTINGS_QR_CODE_READER_RESULT_CODE);
@@ -281,7 +300,7 @@ public class MainActivity extends GlassNotesActivity implements
      */
     private Note getNoteWithTitle(String title) {
         for (Note note : mNotes) {
-            if (note.getName().equals(title)) {
+            if (note.getFilename().equals(title + Note.MARKDOWN_EXTENSION)) {
                 return note;
             }
         }
@@ -334,8 +353,7 @@ public class MainActivity extends GlassNotesActivity implements
     }
 
     private void startEditActivityForNewNote(String title) {
-        Note note = PreferenceManager.getInstance().getDataStore().generateNewNote(title);
-        PreferenceManager.getInstance().getDataStore().createNote(note, new Promise<Note>() {
+        PreferenceManager.getInstance().getDataStore().createNote(title, new Promise<Note>() {
             @Override
             public void resolved(Note data) {
                 startEditActivityForNote(data);
@@ -406,6 +424,12 @@ public class MainActivity extends GlassNotesActivity implements
                             playSound(Sounds.ERROR);
                             return false;
                         }
+                    } else if (gesture == Gesture.LONG_PRESS) {
+                        PreferenceManager.getInstance().setDataStore(
+                                new GitHubAPISyncLocalDiskGlassNotesDataStore(MainActivity.this, "p13i", "stanford"));
+                        playSound(Sounds.SELECTED);
+                        reloadNotes();
+                        return true;
                     }
                     return false;
                 }

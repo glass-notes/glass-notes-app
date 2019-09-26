@@ -52,6 +52,10 @@ public class PreferenceManager {
         return mPreferredDataStore;
     }
 
+    public void setDataStore(GlassNotesDataStore dataStore) {
+        mPreferredDataStore = dataStore;
+    }
+
     public int getSavePeriodMs() {
         return mPreferredSavePeriodMs;
     }

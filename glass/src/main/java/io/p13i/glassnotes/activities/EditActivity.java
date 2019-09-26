@@ -74,15 +74,12 @@ public class EditActivity extends GlassNotesActivity {
         mNoteEditText.setText(R.string.activity_edit_loading);
         mNoteEditText.setTextColor(getResources().getColor(R.color.white));
 
-        // Re-init the data store
-        PreferenceManager.getInstance().getDataStore().initialize();
-
         // Load the Note's mContent read the data store
-        PreferenceManager.getInstance().getDataStore().getNote(mNote.getPath(), new Promise<Note>() {
+        PreferenceManager.getInstance().getDataStore().getNote(mNote.getAbsoluteResourcePath(), new Promise<Note>() {
             @Override
             public void resolved(final Note data) {
-                Log.i(TAG, "Got note read data store. Title: '" + data.getName() + "'; " +
-                        "data store: " + PreferenceManager.getInstance().getDataStore().getShortName());
+                Log.i(TAG, "Got note read data store. Title: '" + data.getFilename() + "'; " +
+                        "data store: " + PreferenceManager.getInstance().getDataStore().getClass().getSimpleName());
                 EditActivity.this.playSound(Sounds.SUCCESS);
                 // Update the UI with the note retrieved read the data store
                 runOnUiThread(new Runnable() {
@@ -102,13 +99,13 @@ public class EditActivity extends GlassNotesActivity {
 
             @Override
             public void rejected(Throwable t) {
-                Log.e(TAG, "Failed to fetch gist with ID: " + mNote.getPath(), t);
+                Log.e(TAG, "Failed to fetch gist with ID: " + mNote.getAbsoluteResourcePath(), t);
                 playSound(Sounds.ERROR);
             }
         });
 
         // Set some status bar elements
-        mStatusTextView.setPageTitle(mNote.getName());
+        mStatusTextView.setPageTitle(mNote.getFilename());
         mStatusTextView.setStatus("Welcome!");
     }
 
@@ -150,20 +147,20 @@ public class EditActivity extends GlassNotesActivity {
         mSaveInProgress = true;
 
         // Else, it was updated
-        mNote = new Note(mNote.getPath(), mNote.getName(), mNoteEditText.getText().toString());
+        mNote = new Note(mNote.getAbsoluteResourcePath(), mNote.getFilename(), mNoteEditText.getText().toString());
 
         // Run the save task
         PreferenceManager.getInstance().getDataStore().saveNote(mNote, new Promise<Note>() {
             @Override
             public void resolved(Note data) {
-                Log.i(TAG, "Saved note with id: " + data.getPath());
+                Log.i(TAG, "Saved note with id: " + data.getAbsoluteResourcePath());
                 mSaveInProgress = false;
                 promise.resolved(data);
             }
 
             @Override
             public void rejected(Throwable t) {
-                Log.e(TAG, "Failed to save note with id: " + mNote.getPath());
+                Log.e(TAG, "Failed to save note with id: " + mNote.getAbsoluteResourcePath());
                 mSaveInProgress = false;
                 promise.rejected(t);
             }
@@ -230,12 +227,12 @@ public class EditActivity extends GlassNotesActivity {
         Log.i(TAG, "Saving note...");
 
         // Update the data model's mContent
-        mNote = new Note(mNote.getPath(), mNote.getName(), mNoteEditText.getText().toString());
+        mNote = new Note(mNote.getAbsoluteResourcePath(), mNote.getFilename(), mNoteEditText.getText().toString());
 
         saveNote(new Promise<Note>() {
             @Override
             public void resolved(Note data) {
-                Log.i(TAG, "Successfully saved note with id: " + data.getPath());
+                Log.i(TAG, "Successfully saved note with id: " + data.getAbsoluteResourcePath());
                 playSound(Sounds.DISMISSED);
 
                 Log.i(TAG, "Finishing " + EditActivity.class.getSimpleName());
@@ -244,7 +241,7 @@ public class EditActivity extends GlassNotesActivity {
 
             @Override
             public void rejected(Throwable t) {
-                Log.e(TAG, "Failed to save note with ID: " + mNote.getPath(), t);
+                Log.e(TAG, "Failed to save note with ID: " + mNote.getAbsoluteResourcePath(), t);
                 playSound(Sounds.ERROR);
             }
         });

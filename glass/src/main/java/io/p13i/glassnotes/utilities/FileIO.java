@@ -41,4 +41,8 @@ public class FileIO {
         }
     }
 
+    public static boolean delete(String absoluteResourcePath) {
+        File file = new File(absoluteResourcePath);
+        return file.delete();
+    }
 }
