@@ -6,9 +6,6 @@ import android.util.Log;
 
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -37,8 +34,7 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
      * @return
      */
     private boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        return Environment.MEDIA_MOUNTED.equals(state);
+        return Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED);
     }
 
     /**
@@ -58,40 +54,6 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
         return new Note(getStorageDirectory() + File.separator + DateUtilities.timestamp() + Note.MARKDOWN_EXTENSION, title, "");
     }
 
-    private void write(String toFile, String data) {
-        File file = new File(toFile);
-
-        try {
-            file.createNewFile();
-            FileOutputStream stream = new FileOutputStream(file, /* append: */false);
-            stream.write(data.getBytes());
-            stream.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private String read(String fromFile) {
-        File file = new File(getStorageDirectory(), fromFile);
-        return read(file);
-    }
-
-    private String read(File file) {
-        int length = (int) file.length();
-
-        byte[] bytes = new byte[length];
-
-        try {
-            FileInputStream in = new FileInputStream(file);
-            in.read(bytes);
-            in.close();
-        } catch (IOException e) {
-            return null;
-        }
-
-        return new String(bytes);
-    }
-
     @Override
     public String getShortName() {
         return "LocalDisk";
@@ -105,7 +67,7 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
 
     @Override
     public void createNote(Note note, Promise<Note> promise) {
-        write(note.getPath(), note.getContent());
+        FileIO.write(note.getPath(), note.getContent());
         promise.resolved(note);
     }
 
@@ -138,7 +100,7 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
 
     @Override
     public void saveNote(Note note, Promise<Note> promise) {
-        write(note.getPath(), note.getContent());
+        FileIO.write(note.getPath(), note.getContent());
         promise.resolved(note);
     }
 }
