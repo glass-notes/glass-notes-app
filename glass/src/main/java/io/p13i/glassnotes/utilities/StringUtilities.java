@@ -8,6 +8,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+
+import io.p13i.glassnotes.exceptions.GlassNotesRuntimeException;
 
 public class StringUtilities {
     public static String readInputStream(InputStream inputStream) throws IOException {
@@ -33,5 +37,16 @@ public class StringUtilities {
     public static String base64EncodeToString(String string) {
         byte[] data = string.getBytes(StandardCharsets.UTF_8);
         return Base64.encodeToString(data, Base64.DEFAULT);
+    }
+
+    public static String sha(String string) {
+        MessageDigest digest = null;
+        try {
+            digest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new GlassNotesRuntimeException(e);
+        }
+        byte[] hash = digest.digest(string.getBytes(StandardCharsets.UTF_8));
+        return new String(hash);
     }
 }

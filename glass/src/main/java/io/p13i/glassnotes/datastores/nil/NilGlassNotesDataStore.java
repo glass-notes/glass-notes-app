@@ -11,8 +11,8 @@ import io.p13i.glassnotes.models.Note;
 /**
  * Returns an empty list in getNotes. All other methods are rejected promises.
  */
-public class NilDataStore implements GlassNotesDataStore<Note> {
-    private static Throwable sCommonException = new RuntimeException("You're using the " + NilDataStore.class.getSimpleName());
+public class NilGlassNotesDataStore implements GlassNotesDataStore<Note> {
+    private static Throwable sCommonException = new RuntimeException("You're using the " + NilGlassNotesDataStore.class.getSimpleName());
 
     @Override
     public void createNote(String title, Promise<Note> promise) {

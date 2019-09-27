@@ -3,25 +3,19 @@ package io.p13i.glassnotes.datastores.github.client;
 import java.util.List;
 
 import io.p13i.glassnotes.datastores.github.client.models.GitHubAPIRepoItem;
+import io.p13i.glassnotes.datastores.github.client.models.GithubAPIRepoItemCreateOrUpdateRequestBody;
+import io.p13i.glassnotes.datastores.github.client.models.GithubAPIRepoItemCreateOrUpdateResponse;
+import io.p13i.glassnotes.datastores.github.client.models.GithubAPIRepoItemDeleteRequestBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
-import retrofit2.http.PATCH;
-import retrofit2.http.POST;
+import retrofit2.http.PUT;
 import retrofit2.http.Path;
 
 public interface GitHubClient {
-//    @GET("/gists")
-//    Call<List<GitHubAPIGist>> getGists();
-//
-//    @POST("/gists")
-//    Call<GitHubAPIGist> postGist(@Body GitHubAPIGist gitHubAPIGist);
-//
-//    @GET("/gists/{gistId}")
-//    Call<GitHubAPIGist> getGist(@Path("gistId") String gistId);
-//
-//    @PATCH("/gists/{gistId}")
-//    Call<GitHubAPIGist> patchGist(@Path("gistId") String gistId, @Body GitHubAPIGist gitHubAPIGist);
+    @PUT("/repos/{owner}/{repo}/contents/{path}")
+    Call<GithubAPIRepoItemCreateOrUpdateResponse> createOrUpdateFile(@Path("owner") String owner, @Path("repo") String repo, @Path("path") String path, @Body GithubAPIRepoItemCreateOrUpdateRequestBody requestBody);
 
     @GET("/repos/{owner}/{repo}/contents/{path}")
     Call<List<GitHubAPIRepoItem>> getContents(@Path("owner") String owner, @Path("repo") String repo, @Path("path") String path);
@@ -29,4 +23,6 @@ public interface GitHubClient {
     @GET("/repos/{owner}/{repo}/contents/{path}")
     Call<GitHubAPIRepoItem> getContent(@Path("owner") String owner, @Path("repo") String repo, @Path("path") String path);
 
+    @DELETE("/repos/{owner}/{repo}/contents/{path}")
+    Call<Void> deleteFile(@Path("owner") String owner, @Path("repo") String repo, @Path("path") String path, @Body GithubAPIRepoItemDeleteRequestBody requestBody);
 }

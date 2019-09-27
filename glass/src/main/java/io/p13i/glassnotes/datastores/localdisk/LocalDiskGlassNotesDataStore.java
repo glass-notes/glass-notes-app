@@ -43,7 +43,7 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
      *
      * @return the storage directory for this application
      */
-    private File getStorageDirectory() {
+    public File getStorageDirectory() {
         // Get the directory for the app's private pictures directory.
         File file = new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), LOCAL_STORAGE_DIRECTORY);
         Log.i(TAG, (file.mkdirs() ? "Directories created" : "Directories not created") + " for path " + file.getAbsolutePath());
@@ -51,9 +51,12 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
     }
 
     @Override
-    public void createNote(String title, Promise<Note> promise) {
-        String filename = title + Note.MARKDOWN_EXTENSION;
-        String absoluteFilePath = new File(getStorageDirectory(),filename).getAbsolutePath();
+    public void createNote(String path, Promise<Note> promise) {
+        String filename = path;
+        if (!path.endsWith(Note.MARKDOWN_EXTENSION)) {
+            filename += Note.MARKDOWN_EXTENSION;
+        }
+        String absoluteFilePath = new File(getStorageDirectory(), filename).getAbsolutePath();
         String content = "";
         FileIO.write(absoluteFilePath, content);
         promise.resolved(new Note(absoluteFilePath, filename, content));

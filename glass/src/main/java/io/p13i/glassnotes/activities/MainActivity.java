@@ -25,6 +25,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.p13i.glassnotes.R;
 import io.p13i.glassnotes.datastores.GitHubAPISyncLocalDiskGlassNotesDataStore;
+import io.p13i.glassnotes.datastores.GlassNotesDataStore;
 import io.p13i.glassnotes.datastores.Promise;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.ui.StatusTextView;
@@ -105,6 +106,8 @@ public class MainActivity extends GlassNotesActivity implements
             Toast.makeText(this, "Failed to load preferences read disk", Toast.LENGTH_SHORT).show();
         }
 
+        PreferenceManager.getInstance().init(this);
+
         // Fetch read the data store and load into the UI
         reloadNotes();
     }
@@ -161,7 +164,12 @@ public class MainActivity extends GlassNotesActivity implements
     private void reloadNotes() {
         clearNotesFromView();
 
-        mStatusTextView.setStatus(PreferenceManager.getInstance().getDataStore().getClass().getSimpleName().substring(0, 15));
+        String newStatus = PreferenceManager.getInstance()
+                .getDataStore()
+                .getClass()
+                .getSimpleName()
+                .replace(GlassNotesDataStore.class.getSimpleName(), "");
+        mStatusTextView.setStatus(newStatus);
 
         // Get the notes read the data store
         PreferenceManager.getInstance().getDataStore().getNotes(new Promise<List<Note>>() {
@@ -174,6 +182,9 @@ public class MainActivity extends GlassNotesActivity implements
                 // Display the notes in the GUI
                 mLimitedViewItemManager = new LimitedViewItemManager<Note>(mNotes,
                         /* maximumCount: */MAX_VISIBLE_NOTES);
+
+                mSelectableTextViewsManager.init();
+
                 setVisibleNotes();
             }
 
@@ -214,7 +225,6 @@ public class MainActivity extends GlassNotesActivity implements
                 }
             });
         }
-        mSelectableTextViewsManager.init();
     }
 
     /**
@@ -313,13 +323,13 @@ public class MainActivity extends GlassNotesActivity implements
         if (selectedText.equals(getResources().getString(R.string.create_new_note))) {
             Date now = DateUtilities.now();
             String title = DateUtilities.formatDate(now, "yyyy-MM-dd") + " | " + DateUtilities.formatDate(now, "HH:mm:ss") + " | New note";
-            startEditActivityForNewNote(title);
+            startEditActivityForNewNoteWithPath(title + Note.MARKDOWN_EXTENSION);
             return true;
 
         } else if (selectedText.equals(getResources().getString(R.string.add_new_todo))) {
             Date now = DateUtilities.now();
             String title = DateUtilities.formatDate(now, "yyyy-MM-dd") + " | " + DateUtilities.formatDate(now, "HH:mm:ss") + " | New TODO";
-            startEditActivityForNewNote(title);
+            startEditActivityForNewNoteWithPath(title + Note.MARKDOWN_EXTENSION);
             return true;
 
         } else if (selectedText.equals(getResources().getString(R.string.load_settings))) {
@@ -352,8 +362,8 @@ public class MainActivity extends GlassNotesActivity implements
         return false;
     }
 
-    private void startEditActivityForNewNote(String title) {
-        PreferenceManager.getInstance().getDataStore().createNote(title, new Promise<Note>() {
+    private void startEditActivityForNewNoteWithPath(String path) {
+        PreferenceManager.getInstance().getDataStore().createNote(path, new Promise<Note>() {
             @Override
             public void resolved(Note data) {
                 startEditActivityForNote(data);
@@ -426,7 +436,11 @@ public class MainActivity extends GlassNotesActivity implements
                         }
                     } else if (gesture == Gesture.LONG_PRESS) {
                         PreferenceManager.getInstance().setDataStore(
-                                new GitHubAPISyncLocalDiskGlassNotesDataStore(MainActivity.this, "p13i", "stanford"));
+                                new GitHubAPISyncLocalDiskGlassNotesDataStore(
+                                        MainActivity.this,
+                                        PreferenceManager.getInstance().getPreferences().getOwner(),
+                                        PreferenceManager.getInstance().getPreferences().getRepo(),
+                                        PreferenceManager.getInstance().getPreferences().getGitHubOAuthToken()));
                         playSound(Sounds.SELECTED);
                         reloadNotes();
                         return true;

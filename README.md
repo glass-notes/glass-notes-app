@@ -16,7 +16,7 @@
 ```json
 {
   "savePeriodMs": 5000,
-  "preferredDataStoreName": "GitHubOfflineSyncingDataStore",
+  "preferredDataStoreName": "GitHubAPISyncLocalDiskGlassNotesDataStore",
   "githubAccessToken": "GITHUB_ACCESS_TOKEN",
   "githubRepoOwnerAndPath": "owner/repo"
 }

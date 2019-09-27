@@ -9,9 +9,11 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
+import io.p13i.glassnotes.datastores.GitHubAPISyncLocalDiskGlassNotesDataStore;
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
+import io.p13i.glassnotes.datastores.github.GithubRepoAPIGlassNotesDataStore;
 import io.p13i.glassnotes.datastores.localdisk.LocalDiskGlassNotesDataStore;
-import io.p13i.glassnotes.datastores.nil.NilDataStore;
+import io.p13i.glassnotes.datastores.nil.NilGlassNotesDataStore;
 
 
 /**
@@ -28,25 +30,16 @@ public class PreferenceManager {
         return sInstance;
     }
 
-    /**
-     * How often to save notes to the specified data store, in milliseconds
-     */
-    private int mPreferredSavePeriodMs = 5000;  // every 5 seconds
+    public void init(Context context) {
+        loadFromSystem(context);
+    }
 
     /**
      * The user's preferred way to save notes
      */
-    private GlassNotesDataStore mPreferredDataStore = new NilDataStore();
+    private GlassNotesDataStore mPreferredDataStore = new NilGlassNotesDataStore();
 
-    /**
-     * The owner and repo of the notes repo
-     */
-    private String mOwnerAndRepo;
-
-    /**
-     * Access token for GitHub gists
-     */
-    private String mPreferredGitHubAccessToken = null;
+    private Preferences mCurrentPreferences;
 
     public GlassNotesDataStore getDataStore() {
         return mPreferredDataStore;
@@ -57,7 +50,7 @@ public class PreferenceManager {
     }
 
     public int getSavePeriodMs() {
-        return mPreferredSavePeriodMs;
+        return mCurrentPreferences.mSavePeriodMs;
     }
 
     /**
@@ -86,9 +79,34 @@ public class PreferenceManager {
             return false;
         }
 
-        mPreferredSavePeriodMs = preferences.mSavePeriodMs;
-        mPreferredGitHubAccessToken = preferences.mGithubAccessToken;
-        mOwnerAndRepo = preferences.mGithubRepoOwnerAndPath;
+        if (preferences.mSavePeriodMs <= 1000) {
+            Log.e(TAG, "Save period must be at least 1000 ms, not " + preferences.mSavePeriodMs);
+            return false;
+        }
+
+        if (preferences.mOwnerAndRepo == null || !preferences.mOwnerAndRepo.contains("/")) {
+            Log.e(TAG, "Invalid owner and repo " + preferences.mOwnerAndRepo);
+            return false;
+        }
+
+        if (preferences.mGitHubAccessToken == null || preferences.mGitHubAccessToken.length() != 40) {
+            Log.e(TAG, "Invalid GitHub OAuth token " + preferences.mGitHubAccessToken);
+            return false;
+        }
+
+        mCurrentPreferences = preferences;
+
+        if (mCurrentPreferences.mDataStoreName.equals(NilGlassNotesDataStore.class.getSimpleName())) {
+            setDataStore(new NilGlassNotesDataStore());
+        } else if (mCurrentPreferences.mDataStoreName.equals(LocalDiskGlassNotesDataStore.class.getSimpleName())) {
+            setDataStore(new LocalDiskGlassNotesDataStore(context));
+        } else if (mCurrentPreferences.mDataStoreName.equals(GithubRepoAPIGlassNotesDataStore.class.getSimpleName())) {
+            setDataStore(new GithubRepoAPIGlassNotesDataStore(preferences.getOwner(), preferences.getRepo(), preferences.mGitHubAccessToken));
+        } else if (mCurrentPreferences.mDataStoreName.equals(GitHubAPISyncLocalDiskGlassNotesDataStore.class.getSimpleName())) {
+            setDataStore(new GitHubAPISyncLocalDiskGlassNotesDataStore(context, preferences.getOwner(), preferences.getRepo(), preferences.mGitHubAccessToken));
+        } else {
+            return false;
+        }
 
         return true;
     }
@@ -102,17 +120,12 @@ public class PreferenceManager {
     public boolean saveToSystem(Context context) {
         Log.i(TAG, "Saving preferences to system with context " + context.getPackageName());
 
-        Preferences preferences = new Preferences(this.mPreferredSavePeriodMs, this.mPreferredGitHubAccessToken, this.mOwnerAndRepo);
-
-        String serializedPreferences = new GsonBuilder().create().toJson(preferences, new TypeToken<Preferences>(){}.getType());
+        String serializedPreferences = new GsonBuilder().create().toJson(mCurrentPreferences, new TypeToken<Preferences>(){}.getType());
 
         SharedPreferences sharedPreferences = context.getSharedPreferences(PREFERENCE_FILE_KEY, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(SHARED_PREFERENCES, serializedPreferences);
-        editor.apply();
-        editor.commit();
-
-        return true;
+        return editor.commit();
     }
 
     /**
@@ -126,5 +139,9 @@ public class PreferenceManager {
         SharedPreferences sharedPreferences = context.getSharedPreferences(PREFERENCE_FILE_KEY, Context.MODE_PRIVATE);
         String serializedPreferences = sharedPreferences.getString(SHARED_PREFERENCES, /* default value: */ null);
         return setFromJsonString(context, serializedPreferences);
+    }
+
+    public Preferences getPreferences() {
+        return mCurrentPreferences;
     }
 }

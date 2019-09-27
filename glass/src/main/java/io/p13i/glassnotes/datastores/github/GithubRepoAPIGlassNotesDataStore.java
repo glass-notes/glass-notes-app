@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
@@ -16,6 +15,9 @@ import io.p13i.glassnotes.datastores.Promise;
 import io.p13i.glassnotes.datastores.github.client.GitHubClient;
 import io.p13i.glassnotes.datastores.github.client.TLSSocketFactory;
 import io.p13i.glassnotes.datastores.github.client.models.GitHubAPIRepoItem;
+import io.p13i.glassnotes.datastores.github.client.models.GithubAPIRepoItemCreateOrUpdateRequestBody;
+import io.p13i.glassnotes.datastores.github.client.models.GithubAPIRepoItemCreateOrUpdateResponse;
+import io.p13i.glassnotes.datastores.github.client.models.GithubAPIRepoItemDeleteRequestBody;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.utilities.StringUtilities;
 import okhttp3.Interceptor;
@@ -33,15 +35,38 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
     private String owner;
     private String repo;
 
-    public GithubRepoAPIGlassNotesDataStore(String owner, String repo) {
+    public GithubRepoAPIGlassNotesDataStore(String owner, String repo, String githubOAuthToken) {
         this.owner = owner;
         this.repo = repo;
-        this.mGitHubAPIClient = ClientFactory.getGitHubClient("caca497ca988b07d1035de459fb9a6d4da504287");
+        this.mGitHubAPIClient = ClientFactory.getGitHubClient(githubOAuthToken);
     }
 
     @Override
-    public void createNote(String title, Promise<Note> promise) {
+    public void createNote(String path, final Promise<Note> promise) {
+        createOrUpdateNote(path, "", promise);
+    }
 
+    private void createOrUpdateNote(String path, final String content, final Promise<Note> promise) {
+        mGitHubAPIClient.createOrUpdateFile(owner, repo, path, new GithubAPIRepoItemCreateOrUpdateRequestBody(
+                /* message: */ "create note :: " + path,
+                /* base64EncodedContent: */ StringUtilities.base64EncodeToString(content),
+                /* sha: */ StringUtilities.sha(content)
+        )).enqueue(new Callback<GithubAPIRepoItemCreateOrUpdateResponse>() {
+            @Override
+            public void onResponse(Call<GithubAPIRepoItemCreateOrUpdateResponse> call, retrofit2.Response<GithubAPIRepoItemCreateOrUpdateResponse> response) {
+                GithubAPIRepoItemCreateOrUpdateResponse createOrUpdateResponse = response.body();
+                if (createOrUpdateResponse == null) {
+                    promise.rejected(new GlassNotesDataStoreException("Response body was null"));
+                    return;
+                }
+                promise.resolved(new Note(createOrUpdateResponse.mContent.mPath, createOrUpdateResponse.mContent.mFilename, content));
+            }
+
+            @Override
+            public void onFailure(Call<GithubAPIRepoItemCreateOrUpdateResponse> call, Throwable t) {
+                promise.rejected(t);
+            }
+        });
     }
 
     @Override
@@ -54,8 +79,8 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
                 List<Note> notes = new ArrayList<Note>(repoItems.size());
 
                 for (GitHubAPIRepoItem repoItem : repoItems) {
-                    if (repoItem.mName.endsWith(Note.MARKDOWN_EXTENSION)) {
-                        notes.add(new Note(repoItem.mPath, repoItem.mName, null));
+                    if (repoItem.mFilename.endsWith(Note.MARKDOWN_EXTENSION)) {
+                        notes.add(new Note(repoItem.mPath, repoItem.mFilename, null));
                     }
                 }
 
@@ -75,7 +100,7 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
             @Override
             public void onResponse(Call<GitHubAPIRepoItem> call, retrofit2.Response<GitHubAPIRepoItem> response) {
                 GitHubAPIRepoItem item = response.body();
-                promise.resolved(new Note(item.mPath, item.mName, StringUtilities.base64Decode(item.mBase64EncodedContent)));
+                promise.resolved(new Note(item.mPath, item.mFilename, StringUtilities.base64Decode(item.mBase64EncodedContent)));
             }
 
             @Override
@@ -87,12 +112,28 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
 
     @Override
     public void saveNote(Note note, Promise<Note> promise) {
-        promise.rejected(new GlassNotesDataStoreException("Not implemented"));
+        createOrUpdateNote(note.getAbsoluteResourcePath(), note.getContent(), promise);
     }
 
     @Override
-    public void deleteNote(Note note, Promise<Boolean> promise) {
-        promise.rejected(new GlassNotesDataStoreException("Not implemented"));
+    public void deleteNote(Note note, final Promise<Boolean> promise) {
+        mGitHubAPIClient.deleteFile(
+                owner,  repo,  note.getAbsoluteResourcePath(),
+                new GithubAPIRepoItemDeleteRequestBody(
+                        "delete note :: " + note.getAbsoluteResourcePath(),
+                        StringUtilities.sha(note.getContent())
+                ))
+                .enqueue(new Callback<Void>() {
+                    @Override
+                    public void onResponse(Call<Void> call, retrofit2.Response<Void> response) {
+                        promise.resolved(true);
+                    }
+
+                    @Override
+                    public void onFailure(Call<Void> call, Throwable t) {
+                        promise.rejected(t);
+                    }
+                });
     }
 
 

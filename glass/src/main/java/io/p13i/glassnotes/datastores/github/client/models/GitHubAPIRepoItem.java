@@ -4,28 +4,12 @@ import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
 
+import io.p13i.glassnotes.utilities.Assert;
+
 public class GitHubAPIRepoItem implements Serializable {
-    /*
-    {
-    "type": "file",
-    "size": 625,
-    "name": "octokit.rb",
-    "path": "lib/octokit.rb",
-    "sha": "fff6fe3a23bf1c8ea0692b4a883af99bee26fd3b",
-    "url": "https://api.github.com/repos/octokit/octokit.rb/contents/lib/octokit.rb",
-    "git_url": "https://api.github.com/repos/octokit/octokit.rb/git/blobs/fff6fe3a23bf1c8ea0692b4a883af99bee26fd3b",
-    "html_url": "https://github.com/octokit/octokit.rb/blob/master/lib/octokit.rb",
-    "download_url": "https://raw.githubusercontent.com/octokit/octokit.rb/master/lib/octokit.rb",
-    "_links": {
-      "self": "https://api.github.com/repos/octokit/octokit.rb/contents/lib/octokit.rb",
-      "git": "https://api.github.com/repos/octokit/octokit.rb/git/blobs/fff6fe3a23bf1c8ea0692b4a883af99bee26fd3b",
-      "html": "https://github.com/octokit/octokit.rb/blob/master/lib/octokit.rb"
-    }
-  },
-     */
 
     @SerializedName("name")
-    public String mName;
+    public String mFilename;
 
     @SerializedName("path")
     public String mPath;
@@ -33,8 +17,10 @@ public class GitHubAPIRepoItem implements Serializable {
     @SerializedName("content")
     public String mBase64EncodedContent;
 
-    public GitHubAPIRepoItem(String name, String path, String base64EncodedContent) {
-        mName = name;
+    public GitHubAPIRepoItem(String filename, String path, String base64EncodedContent) {
+        Assert.that(path.endsWith(filename));
+
+        mFilename = filename;
         mPath = path;
         mBase64EncodedContent = base64EncodedContent;
     }

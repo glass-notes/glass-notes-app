@@ -3,6 +3,7 @@ package io.p13i.glassnotes.datastores;
 import android.content.Context;
 import android.util.Log;
 
+import java.io.File;
 import java.util.List;
 
 import io.p13i.glassnotes.datastores.github.GithubRepoAPIGlassNotesDataStore;
@@ -14,14 +15,34 @@ public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesData
     private LocalDiskGlassNotesDataStore localDiskGlassNotesDataStore;
     private GithubRepoAPIGlassNotesDataStore githubRepoAPIGlassNotesDataStore;
 
-    public GitHubAPISyncLocalDiskGlassNotesDataStore(Context context, String owner, String repo) {
+    public GitHubAPISyncLocalDiskGlassNotesDataStore(Context context, String owner, String repo, String githubOAuthToken) {
         localDiskGlassNotesDataStore = new LocalDiskGlassNotesDataStore(context);
-        githubRepoAPIGlassNotesDataStore = new GithubRepoAPIGlassNotesDataStore(owner, repo);
+        githubRepoAPIGlassNotesDataStore = new GithubRepoAPIGlassNotesDataStore(owner, repo, githubOAuthToken);
     }
 
     @Override
-    public void createNote(String title, Promise<Note> promise) {
+    public void createNote(final String path, final Promise<Note> promise) {
+        githubRepoAPIGlassNotesDataStore.createNote(path, new Promise<Note>() {
+            @Override
+            public void resolved(Note data) {
+                promise.resolved(data);
+            }
 
+            @Override
+            public void rejected(Throwable t) {
+                localDiskGlassNotesDataStore.createNote(path, new Promise<Note>() {
+                    @Override
+                    public void resolved(Note data) {
+                        promise.resolved(data);
+                    }
+
+                    @Override
+                    public void rejected(Throwable t) {
+                        promise.rejected(t);
+                    }
+                });
+            }
+        });
     }
 
     @Override
@@ -50,8 +71,32 @@ public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesData
     }
 
     @Override
-    public void saveNote(Note note, Promise<Note> promise) {
+    public void saveNote(final Note note, final Promise<Note> promise) {
+        githubRepoAPIGlassNotesDataStore.saveNote(note, new Promise<Note>() {
+            @Override
+            public void resolved(Note data) {
+                promise.resolved(data);
+            }
 
+            @Override
+            public void rejected(Throwable t) {
+                localDiskGlassNotesDataStore.saveNote(new Note(
+                        new File(localDiskGlassNotesDataStore.getStorageDirectory(),
+                  "TEMP-" + note.getAbsoluteResourcePath()).getAbsolutePath(),
+                        note.getFilename(),
+                        note.getContent()), new Promise<Note>() {
+                    @Override
+                    public void resolved(Note data) {
+                        promise.resolved(data);
+                    }
+
+                    @Override
+                    public void rejected(Throwable t) {
+                        promise.rejected(t);
+                    }
+                });
+            }
+        });
     }
 
     @Override
