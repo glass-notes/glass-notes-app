@@ -25,4 +25,8 @@ public interface GitHubClient {
 
     @GET("/repos/{owner}/{repo}/contents/{path}")
     Call<List<GitHubAPIRepoItem>> getContents(@Path("owner") String owner, @Path("repo") String repo, @Path("path") String path);
+
+    @GET("/repos/{owner}/{repo}/contents/{path}")
+    Call<GitHubAPIRepoItem> getContent(@Path("owner") String owner, @Path("repo") String repo, @Path("path") String path);
+
 }

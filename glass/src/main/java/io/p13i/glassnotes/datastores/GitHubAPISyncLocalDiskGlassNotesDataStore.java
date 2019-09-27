@@ -25,7 +25,28 @@ public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesData
     }
 
     @Override
-    public void getNote(String path, final Promise<Note> promise) {
+    public void getNote(final String path, final Promise<Note> promise) {
+        githubRepoAPIGlassNotesDataStore.getNote(path, new Promise<Note>() {
+            @Override
+            public void resolved(Note data) {
+                promise.resolved(data);
+            }
+
+            @Override
+            public void rejected(Throwable t) {
+                localDiskGlassNotesDataStore.getNote(path, new Promise<Note>() {
+                    @Override
+                    public void resolved(Note data) {
+                        promise.resolved(data);
+                    }
+
+                    @Override
+                    public void rejected(Throwable t) {
+                        promise.rejected(t);
+                    }
+                });
+            }
+        });
     }
 
     @Override

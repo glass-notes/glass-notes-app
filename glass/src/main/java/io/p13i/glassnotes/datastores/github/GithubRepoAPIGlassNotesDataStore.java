@@ -17,6 +17,7 @@ import io.p13i.glassnotes.datastores.github.client.GitHubClient;
 import io.p13i.glassnotes.datastores.github.client.TLSSocketFactory;
 import io.p13i.glassnotes.datastores.github.client.models.GitHubAPIRepoItem;
 import io.p13i.glassnotes.models.Note;
+import io.p13i.glassnotes.utilities.StringUtilities;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -69,8 +70,19 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
     }
 
     @Override
-    public void getNote(String path, Promise<Note> promise) {
-        promise.rejected(new GlassNotesDataStoreException("Not implemented"));
+    public void getNote(String path, final Promise<Note> promise) {
+        mGitHubAPIClient.getContent(owner, repo, path).enqueue(new Callback<GitHubAPIRepoItem>() {
+            @Override
+            public void onResponse(Call<GitHubAPIRepoItem> call, retrofit2.Response<GitHubAPIRepoItem> response) {
+                GitHubAPIRepoItem item = response.body();
+                promise.resolved(new Note(item.mPath, item.mName, StringUtilities.base64Decode(item.mBase64EncodedContent)));
+            }
+
+            @Override
+            public void onFailure(Call<GitHubAPIRepoItem> call, Throwable throwable) {
+                promise.rejected(throwable);
+            }
+        });
     }
 
     @Override

@@ -1,10 +1,13 @@
 package io.p13i.glassnotes.utilities;
 
+import android.util.Base64;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 public class StringUtilities {
     public static String readInputStream(InputStream inputStream) throws IOException {
@@ -20,5 +23,15 @@ public class StringUtilities {
 
 
         return stringBuilder.toString();
+    }
+
+    public static String base64Decode(String string) {
+        byte[] decodedBytes = Base64.decode(string, Base64.DEFAULT);
+        return new String(decodedBytes, StandardCharsets.UTF_8);
+    }
+
+    public static String base64EncodeToString(String string) {
+        byte[] data = string.getBytes(StandardCharsets.UTF_8);
+        return Base64.encodeToString(data, Base64.DEFAULT);
     }
 }

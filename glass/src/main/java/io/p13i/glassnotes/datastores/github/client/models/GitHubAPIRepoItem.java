@@ -30,8 +30,12 @@ public class GitHubAPIRepoItem implements Serializable {
     @SerializedName("path")
     public String mPath;
 
-    public GitHubAPIRepoItem(String name, String path) {
+    @SerializedName("content")
+    public String mBase64EncodedContent;
+
+    public GitHubAPIRepoItem(String name, String path, String base64EncodedContent) {
         mName = name;
         mPath = path;
+        mBase64EncodedContent = base64EncodedContent;
     }
 }

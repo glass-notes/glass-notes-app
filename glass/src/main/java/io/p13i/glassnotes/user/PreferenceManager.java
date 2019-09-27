@@ -87,19 +87,8 @@ public class PreferenceManager {
         }
 
         mPreferredSavePeriodMs = preferences.mSavePeriodMs;
-        mPreferredGitHubAccessToken = preferences.mGitHubAccessToken;
-        mOwnerAndRepo = preferences.mOwnerAndRepo;
-
-        if (preferences.mDataStoreName != null) {
-            if (preferences.mDataStoreName.equals(LocalDiskGlassNotesDataStore.class.getSimpleName())) {
-                mPreferredDataStore = new LocalDiskGlassNotesDataStore(context);
-
-            } else {
-                return false;
-            }
-        } else {
-            return false;
-        }
+        mPreferredGitHubAccessToken = preferences.mGithubAccessToken;
+        mOwnerAndRepo = preferences.mGithubRepoOwnerAndPath;
 
         return true;
     }
@@ -113,12 +102,7 @@ public class PreferenceManager {
     public boolean saveToSystem(Context context) {
         Log.i(TAG, "Saving preferences to system with context " + context.getPackageName());
 
-        Preferences preferences = new Preferences() {{
-            mSavePeriodMs = PreferenceManager.this.mPreferredSavePeriodMs;
-            mDataStoreName = PreferenceManager.this.mPreferredDataStore.getClass().getSimpleName();
-            mGitHubAccessToken = PreferenceManager.this.mPreferredGitHubAccessToken;
-            mOwnerAndRepo = PreferenceManager.this.mOwnerAndRepo;
-        }};
+        Preferences preferences = new Preferences(this.mPreferredSavePeriodMs, this.mPreferredGitHubAccessToken, this.mOwnerAndRepo);
 
         String serializedPreferences = new GsonBuilder().create().toJson(preferences, new TypeToken<Preferences>(){}.getType());
 
