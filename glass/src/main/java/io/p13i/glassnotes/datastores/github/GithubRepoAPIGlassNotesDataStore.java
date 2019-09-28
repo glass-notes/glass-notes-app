@@ -1,5 +1,7 @@
 package io.p13i.glassnotes.datastores.github;
 
+import android.util.Log;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -31,6 +33,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Note> {
 
+    private static final String TAG = GithubRepoAPIGlassNotesDataStore.class.getName();
     private final GitHubClient mGitHubAPIClient;
     private String owner;
     private String repo;
@@ -43,27 +46,46 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
 
     @Override
     public void createNote(String path, final Promise<Note> promise) {
-        createOrUpdateNote(path, "", promise);
+        Log.i(TAG, "Creating note at path " + path);
+        createOrUpdateNote(path, "", null, new Promise<Note>() {
+            @Override
+            public void resolved(Note data) {
+                Log.i(TAG, "Promise resolved");
+                promise.resolved(data);
+            }
+
+            @Override
+            public void rejected(Throwable t) {
+                Log.e(TAG, "Promise rejected", t);
+                promise.rejected(t);
+            }
+        });
     }
 
-    private void createOrUpdateNote(String path, final String content, final Promise<Note> promise) {
+    private void createOrUpdateNote(final String path, final String content, final String priorContentsSha, final Promise<Note> promise) {
+        String base64Encoded = StringUtilities.base64EncodeToString(content);
+        Log.i(TAG, "Saving note:\n" + "path: " + path + "\ncontent: " + content + "\nprior sha: " + priorContentsSha);
         mGitHubAPIClient.createOrUpdateFile(owner, repo, path, new GithubAPIRepoItemCreateOrUpdateRequestBody(
                 /* message: */ "create note :: " + path,
-                /* base64EncodedContent: */ StringUtilities.base64EncodeToString(content),
-                /* sha: */ StringUtilities.sha(content)
+                /* base64EncodedContent: */ base64Encoded,
+                /* priorContentsSha: */ priorContentsSha
         )).enqueue(new Callback<GithubAPIRepoItemCreateOrUpdateResponse>() {
             @Override
             public void onResponse(Call<GithubAPIRepoItemCreateOrUpdateResponse> call, retrofit2.Response<GithubAPIRepoItemCreateOrUpdateResponse> response) {
                 GithubAPIRepoItemCreateOrUpdateResponse createOrUpdateResponse = response.body();
                 if (createOrUpdateResponse == null) {
-                    promise.rejected(new GlassNotesDataStoreException("Response body was null"));
+                    Throwable t = new GlassNotesDataStoreException(response);
+                    Log.e(TAG, "Failed to create or update note at path " + path, t);
+                    promise.rejected(t);
                     return;
                 }
-                promise.resolved(new Note(createOrUpdateResponse.mContent.mPath, createOrUpdateResponse.mContent.mFilename, content));
+                Log.i(TAG, "Created or updated note at path " + path);
+                promise.resolved(new Note(createOrUpdateResponse.mContent.mPath, createOrUpdateResponse.mContent.mFilename, content, createOrUpdateResponse.mContent.mSha));
             }
 
             @Override
             public void onFailure(Call<GithubAPIRepoItemCreateOrUpdateResponse> call, Throwable t) {
+                Log.e(TAG, "Failed to create or update note at path " + path);
                 promise.rejected(t);
             }
         });
@@ -71,7 +93,8 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
 
     @Override
     public void getNotes(final Promise<List<Note>> promise) {
-        mGitHubAPIClient.getContents(owner, repo, "").enqueue(new Callback<List<GitHubAPIRepoItem>>() {
+        final String path = "";
+        mGitHubAPIClient.getContents(owner, repo, path).enqueue(new Callback<List<GitHubAPIRepoItem>>() {
             @Override
             public void onResponse(Call<List<GitHubAPIRepoItem>> call, retrofit2.Response<List<GitHubAPIRepoItem>> response) {
                 List<GitHubAPIRepoItem> repoItems = response.body();
@@ -80,31 +103,45 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
 
                 for (GitHubAPIRepoItem repoItem : repoItems) {
                     if (repoItem.mFilename.endsWith(Note.MARKDOWN_EXTENSION)) {
-                        notes.add(new Note(repoItem.mPath, repoItem.mFilename, null));
+                        notes.add(new Note(repoItem.mPath,
+                                repoItem.mFilename,
+                                StringUtilities.base64Decode(repoItem.mBase64EncodedContent),
+                                repoItem.mSha));
                     }
                 }
 
+                Log.i(TAG, "Got " + notes.size() + " notes from API at path " + path);
                 promise.resolved(notes);
             }
 
             @Override
             public void onFailure(Call<List<GitHubAPIRepoItem>> call, Throwable t) {
+                Log.e(TAG, "Failed to get notes from API at path " + path, t);
                 promise.rejected(t);
             }
         });
     }
 
     @Override
-    public void getNote(String path, final Promise<Note> promise) {
+    public void getNote(final String path, final Promise<Note> promise) {
         mGitHubAPIClient.getContent(owner, repo, path).enqueue(new Callback<GitHubAPIRepoItem>() {
             @Override
             public void onResponse(Call<GitHubAPIRepoItem> call, retrofit2.Response<GitHubAPIRepoItem> response) {
                 GitHubAPIRepoItem item = response.body();
-                promise.resolved(new Note(item.mPath, item.mFilename, StringUtilities.base64Decode(item.mBase64EncodedContent)));
+                if (item == null) {
+                    Throwable t = new GlassNotesDataStoreException("Github response body was null");
+                    Log.e(TAG, "Failed to get note at path " + path);
+                    promise.rejected(t);
+                    return;
+                }
+
+                Log.i(TAG, "Got note from API at path " + path);
+                promise.resolved(new Note(item.mPath, item.mFilename, StringUtilities.base64Decode(item.mBase64EncodedContent), item.mSha));
             }
 
             @Override
             public void onFailure(Call<GitHubAPIRepoItem> call, Throwable throwable) {
+                Log.e(TAG, "Failed to get note at path " + path, throwable);
                 promise.rejected(throwable);
             }
         });
@@ -112,25 +149,28 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
 
     @Override
     public void saveNote(Note note, Promise<Note> promise) {
-        createOrUpdateNote(note.getAbsoluteResourcePath(), note.getContent(), promise);
+        Log.i(TAG, "Saving note at path " + note.getAbsoluteResourcePath());
+        createOrUpdateNote(note.getAbsoluteResourcePath(), note.getContent(), note.getSha(), promise);
     }
 
     @Override
-    public void deleteNote(Note note, final Promise<Boolean> promise) {
-        mGitHubAPIClient.deleteFile(
-                owner,  repo,  note.getAbsoluteResourcePath(),
+    public void deleteNote(final Note note, final Promise<Boolean> promise) {
+        Log.i(TAG, "Delete note at path " + note.getAbsoluteResourcePath());
+        mGitHubAPIClient.deleteFile(owner,  repo,  note.getAbsoluteResourcePath(),
                 new GithubAPIRepoItemDeleteRequestBody(
-                        "delete note :: " + note.getAbsoluteResourcePath(),
-                        StringUtilities.sha(note.getContent())
+                        /* message: */ "delete note :: " + note.getAbsoluteResourcePath(),
+                        /* content: */ StringUtilities.sha(note.getContent())
                 ))
                 .enqueue(new Callback<Void>() {
                     @Override
                     public void onResponse(Call<Void> call, retrofit2.Response<Void> response) {
+                        Log.i(TAG, "Deleted note at path " + note.getAbsoluteResourcePath());
                         promise.resolved(true);
                     }
 
                     @Override
                     public void onFailure(Call<Void> call, Throwable t) {
+                        Log.e(TAG, "Failed to delete note at path " + note.getAbsoluteResourcePath(), t);
                         promise.rejected(t);
                     }
                 });

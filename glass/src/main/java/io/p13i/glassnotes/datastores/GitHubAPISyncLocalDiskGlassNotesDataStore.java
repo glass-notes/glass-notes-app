@@ -84,7 +84,8 @@ public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesData
                         new File(localDiskGlassNotesDataStore.getStorageDirectory(),
                   "TEMP-" + note.getAbsoluteResourcePath()).getAbsolutePath(),
                         note.getFilename(),
-                        note.getContent()), new Promise<Note>() {
+                        note.getContent(),
+                        note.getSha()), new Promise<Note>() {
                     @Override
                     public void resolved(Note data) {
                         promise.resolved(data);

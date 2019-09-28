@@ -10,11 +10,11 @@ public class GithubAPIRepoItemCreateOrUpdateRequestBody {
     public String mBase64EncodedContent;
 
     @SerializedName("sha")
-    public String mSha;
+    public String mPriorContentsSha;
 
-    public GithubAPIRepoItemCreateOrUpdateRequestBody(String mMessage, String mBase64EncodedContent, String mSha) {
+    public GithubAPIRepoItemCreateOrUpdateRequestBody(String mMessage, String mBase64EncodedContent, String priorContentsSha) {
         this.mMessage = mMessage;
         this.mBase64EncodedContent = mBase64EncodedContent;
-        this.mSha = mSha;
+        this.mPriorContentsSha = priorContentsSha;
     }
 }

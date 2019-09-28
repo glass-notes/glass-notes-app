@@ -17,10 +17,14 @@ public class Note implements Serializable {
     @SerializedName("content")
     public String mContent;
 
-    public Note(String absoluteResourcePath, String filename, String content) {
+    @SerializedName("sha")
+    public String mSha;
+
+    public Note(String absoluteResourcePath, String filename, String content, String sha) {
         mAbsoluteResourcePath = absoluteResourcePath;
         mFilename = filename;
         mContent = content;
+        mSha = sha;
     }
 
     public String getAbsoluteResourcePath() {
@@ -33,6 +37,10 @@ public class Note implements Serializable {
 
     public String getContent() {
         return mContent;
+    }
+
+    public String getSha() {
+        return mSha;
     }
 
     @Override

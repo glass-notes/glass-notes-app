@@ -409,7 +409,7 @@ public class MainActivity extends GlassNotesActivity implements
 
     private GestureDetector createGestureDetector(Context context) {
         return new GestureDetector(context) {{
-            setBaseListener( new GestureDetector.BaseListener() {
+            setBaseListener(new GestureDetector.BaseListener() {
                 @Override
                 public boolean onGesture(Gesture gesture) {
                     if (gesture == Gesture.TAP) {
@@ -435,14 +435,9 @@ public class MainActivity extends GlassNotesActivity implements
                             return false;
                         }
                     } else if (gesture == Gesture.LONG_PRESS) {
-                        PreferenceManager.getInstance().setDataStore(
-                                new GitHubAPISyncLocalDiskGlassNotesDataStore(
-                                        MainActivity.this,
-                                        PreferenceManager.getInstance().getPreferences().getOwner(),
-                                        PreferenceManager.getInstance().getPreferences().getRepo(),
-                                        PreferenceManager.getInstance().getPreferences().getGitHubOAuthToken()));
-                        playSound(Sounds.SELECTED);
                         reloadNotes();
+                        playSound(Sounds.SUCCESS);
+                        Toast.makeText(MainActivity.this, "Reloaded notes from data store", Toast.LENGTH_LONG).show();
                         return true;
                     }
                     return false;

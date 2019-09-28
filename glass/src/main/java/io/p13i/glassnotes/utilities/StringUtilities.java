@@ -30,6 +30,9 @@ public class StringUtilities {
     }
 
     public static String base64Decode(String string) {
+        if (string == null || string.isEmpty()) {
+            return "";
+        }
         byte[] decodedBytes = Base64.decode(string, Base64.DEFAULT);
         return new String(decodedBytes, StandardCharsets.UTF_8);
     }
@@ -40,7 +43,7 @@ public class StringUtilities {
     }
 
     public static String sha(String string) {
-        MessageDigest digest = null;
+        MessageDigest digest;
         try {
             digest = MessageDigest.getInstance("SHA-256");
         } catch (NoSuchAlgorithmException e) {

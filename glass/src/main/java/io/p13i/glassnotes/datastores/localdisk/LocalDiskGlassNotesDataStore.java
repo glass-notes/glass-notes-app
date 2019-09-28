@@ -59,7 +59,7 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
         String absoluteFilePath = new File(getStorageDirectory(), filename).getAbsolutePath();
         String content = "";
         FileIO.write(absoluteFilePath, content);
-        promise.resolved(new Note(absoluteFilePath, filename, content));
+        promise.resolved(new Note(absoluteFilePath, filename, content, null));
     }
 
     @Override
@@ -71,7 +71,7 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
 
         for (File noteFile : files) {
             if (noteFile.getName().endsWith(Note.MARKDOWN_EXTENSION)) {
-                notes.add(new Note(noteFile.getAbsolutePath(), noteFile.getName(), FileIO.read(noteFile)));
+                notes.add(new Note(noteFile.getAbsolutePath(), noteFile.getName(), FileIO.read(noteFile), null));
                 Log.i(TAG, "Added file " + noteFile.getAbsolutePath());
             } else {
                 Log.i(TAG, "Skipping file " + noteFile.getAbsolutePath());
@@ -84,7 +84,7 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
     @Override
     public void getNote(String path, Promise<Note> promise) {
         File noteFile = new File(path);
-        promise.resolved(new Note(noteFile.getAbsolutePath(), noteFile.getName(), FileIO.read(noteFile)));
+        promise.resolved(new Note(noteFile.getAbsolutePath(), noteFile.getName(), FileIO.read(noteFile), null));
     }
 
     @Override

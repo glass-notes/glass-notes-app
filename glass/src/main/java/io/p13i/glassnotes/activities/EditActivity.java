@@ -17,6 +17,7 @@ import java.util.TimerTask;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.p13i.glassnotes.R;
+import io.p13i.glassnotes.datastores.GlassNotesDataStoreException;
 import io.p13i.glassnotes.datastores.Promise;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.ui.StatusTextView;
@@ -51,6 +52,7 @@ public class EditActivity extends GlassNotesActivity {
      * Flag to indicate if saving is currently in progress
      */
     private boolean mSaveInProgress;
+    private boolean mPriorNoteSaveSucceeded = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,30 +140,31 @@ public class EditActivity extends GlassNotesActivity {
         String updatedText = mNoteEditText.getText().toString();
 
         // Only save to the data store if the contents have changed
-        if (priorText.equals(updatedText)) {
+        if (priorText.equals(updatedText) && mPriorNoteSaveSucceeded) {
             Log.i(TAG, "Contents identical to prior note. Not continuing with save.");
+            mPriorNoteSaveSucceeded = false;
             promise.resolved(mNote);
             return;
         }
 
         mSaveInProgress = true;
 
-        // Else, it was updated
-        mNote = new Note(mNote.getAbsoluteResourcePath(), mNote.getFilename(), mNoteEditText.getText().toString());
-
         // Run the save task
-        PreferenceManager.getInstance().getDataStore().saveNote(mNote, new Promise<Note>() {
+        PreferenceManager.getInstance().getDataStore().saveNote(new Note(mNote.getAbsoluteResourcePath(), mNote.getFilename(), mNoteEditText.getText().toString(), mNote.getSha()), new Promise<Note>() {
             @Override
             public void resolved(Note data) {
                 Log.i(TAG, "Saved note with id: " + data.getAbsoluteResourcePath());
                 mSaveInProgress = false;
+                mPriorNoteSaveSucceeded = true;
                 promise.resolved(data);
+                mNote = data;
             }
 
             @Override
             public void rejected(Throwable t) {
                 Log.e(TAG, "Failed to save note with id: " + mNote.getAbsoluteResourcePath());
                 mSaveInProgress = false;
+                mPriorNoteSaveSucceeded = false;
                 promise.rejected(t);
             }
         });
@@ -177,11 +180,13 @@ public class EditActivity extends GlassNotesActivity {
                     @Override
                     public void resolved(Note data) {
                         playSound(Sounds.SUCCESS);
+                        Toast.makeText(EditActivity.this, "Saved!", Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
                     public void rejected(Throwable t) {
                         playSound(Sounds.ERROR);
+                        Toast.makeText(EditActivity.this, "Save failed :(", Toast.LENGTH_LONG).show();
                     }
                 });
                 return true;
@@ -227,7 +232,7 @@ public class EditActivity extends GlassNotesActivity {
         Log.i(TAG, "Saving note...");
 
         // Update the data model's mContent
-        mNote = new Note(mNote.getAbsoluteResourcePath(), mNote.getFilename(), mNoteEditText.getText().toString());
+        mNote = new Note(mNote.getAbsoluteResourcePath(), mNote.getFilename(), mNoteEditText.getText().toString(), mNote.getSha());
 
         saveNote(new Promise<Note>() {
             @Override
@@ -245,6 +250,17 @@ public class EditActivity extends GlassNotesActivity {
                 playSound(Sounds.ERROR);
             }
         });
+    }
+
+    @Override
+    public void finish() {
+        super.finish();
+
+        if (mSaveTimer != null) {
+            mSaveTimer.purge();
+            mSaveTimer.cancel();
+            mSaveTimer = null;
+        }
     }
 
     /**
