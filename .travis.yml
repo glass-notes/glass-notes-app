@@ -1,0 +1,6 @@
+language: android
+android:
+  components:
+    - build-tools-21.1.1
+    - extra-android-support
+    - addon-google_gdk-google-19

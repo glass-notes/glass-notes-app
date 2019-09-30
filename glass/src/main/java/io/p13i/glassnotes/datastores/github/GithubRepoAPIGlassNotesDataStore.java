@@ -6,6 +6,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -85,7 +86,11 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
 
             @Override
             public void onFailure(Call<GithubAPIRepoItemCreateOrUpdateResponse> call, Throwable t) {
-                Log.e(TAG, "Failed to create or update note at path " + path);
+                if (t instanceof UnknownHostException) {
+                    Log.e(TAG, "Failed to create or update note at path " + path + " due to:\n" + t.toString());
+                } else {
+                    Log.e(TAG, "Failed to create or update note at path " + path, t);
+                }
                 promise.rejected(t);
             }
         });

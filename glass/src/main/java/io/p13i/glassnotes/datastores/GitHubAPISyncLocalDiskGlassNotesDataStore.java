@@ -12,6 +12,8 @@ import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.utilities.ListUtils;
 
 public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
+    private static final String TAG = GithubRepoAPIGlassNotesDataStore.class.getName();
+
     private LocalDiskGlassNotesDataStore localDiskGlassNotesDataStore;
     private GithubRepoAPIGlassNotesDataStore githubRepoAPIGlassNotesDataStore;
 
@@ -22,22 +24,27 @@ public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesData
 
     @Override
     public void createNote(final String path, final Promise<Note> promise) {
+        Log.i(TAG, "Creating note at path " + path);
         githubRepoAPIGlassNotesDataStore.createNote(path, new Promise<Note>() {
             @Override
             public void resolved(Note data) {
+                Log.i(TAG, "Using GitHub, created note at path " + path);
                 promise.resolved(data);
             }
 
             @Override
             public void rejected(Throwable t) {
+                Log.i(TAG, "Failed to create note on Github, trying local disk for path " + path, t);
                 localDiskGlassNotesDataStore.createNote(path, new Promise<Note>() {
                     @Override
                     public void resolved(Note data) {
+                        Log.i(TAG, "Created on local disk with path" + data.getAbsoluteResourcePath());
                         promise.resolved(data);
                     }
 
                     @Override
                     public void rejected(Throwable t) {
+                        Log.i(TAG, "Failed to create note on local disk with path" + path);
                         promise.rejected(t);
                     }
                 });
@@ -47,22 +54,27 @@ public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesData
 
     @Override
     public void getNote(final String path, final Promise<Note> promise) {
+        Log.i(TAG, "Getting note at path " + path);
         githubRepoAPIGlassNotesDataStore.getNote(path, new Promise<Note>() {
             @Override
             public void resolved(Note data) {
+                Log.i(TAG, "Got note from GitHub at path " + data.getAbsoluteResourcePath());
                 promise.resolved(data);
             }
 
             @Override
             public void rejected(Throwable t) {
+                Log.e(TAG, "Failed to get note from GitHub API, trying local disk for note with path " + path, t);
                 localDiskGlassNotesDataStore.getNote(path, new Promise<Note>() {
                     @Override
                     public void resolved(Note data) {
+                        Log.i(TAG, "Got note from local disk with path " + path);
                         promise.resolved(data);
                     }
 
                     @Override
                     public void rejected(Throwable t) {
+                        Log.e(TAG, "Failed to get note from local disk with path " + path);
                         promise.rejected(t);
                     }
                 });
@@ -71,28 +83,43 @@ public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesData
     }
 
     @Override
-    public void saveNote(final Note note, final Promise<Note> promise) {
+    public void saveNote(Note note, final Promise<Note> promise) {
+        Log.i(TAG, "Saving note with path " + note.getAbsoluteResourcePath());
+
+        // Remove the local disk directory if it exists in the path
+        String localDiskDirectory = localDiskGlassNotesDataStore.getStorageDirectory().getAbsolutePath();
+
+        final Note noteToSave = new Note(
+                note.getAbsoluteResourcePath().replace(localDiskDirectory, ""),
+                note.getFilename(),
+                note.getContent(),
+                note.getSha()
+        );
+
         githubRepoAPIGlassNotesDataStore.saveNote(note, new Promise<Note>() {
             @Override
             public void resolved(Note data) {
+                Log.i(TAG, "Saved to GitHub for note with path " + data.getAbsoluteResourcePath());
                 promise.resolved(data);
             }
 
             @Override
             public void rejected(Throwable t) {
+                Log.e(TAG, "Failed to save to GitHub, trying local disk for note with path " + noteToSave.getAbsoluteResourcePath(), t);
                 localDiskGlassNotesDataStore.saveNote(new Note(
-                        new File(localDiskGlassNotesDataStore.getStorageDirectory(),
-                  "TEMP-" + note.getAbsoluteResourcePath()).getAbsolutePath(),
-                        note.getFilename(),
-                        note.getContent(),
-                        note.getSha()), new Promise<Note>() {
+                        new File(localDiskGlassNotesDataStore.getStorageDirectory(), "TEMP-" + noteToSave.getFilename()).getAbsolutePath(),
+                        noteToSave.getFilename(),
+                        noteToSave.getContent(),
+                        noteToSave.getSha()), new Promise<Note>() {
                     @Override
                     public void resolved(Note data) {
+                        Log.i(TAG, "Saved note to local disk for note with path " + data.getAbsoluteResourcePath());
                         promise.resolved(data);
                     }
 
                     @Override
                     public void rejected(Throwable t) {
+                        Log.e(TAG, "Failed to save note to local disk for note with path " + noteToSave.getAbsoluteResourcePath(), t);
                         promise.rejected(t);
                     }
                 });

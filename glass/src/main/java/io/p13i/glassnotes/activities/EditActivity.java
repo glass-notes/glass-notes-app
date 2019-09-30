@@ -162,7 +162,7 @@ public class EditActivity extends GlassNotesActivity {
 
             @Override
             public void rejected(Throwable t) {
-                Log.e(TAG, "Failed to save note with id: " + mNote.getAbsoluteResourcePath());
+                Log.e(TAG, "Failed to save note with id: " + mNote.getAbsoluteResourcePath(), t);
                 mSaveInProgress = false;
                 mPriorNoteSaveSucceeded = false;
                 promise.rejected(t);

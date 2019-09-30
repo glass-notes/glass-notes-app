@@ -89,7 +89,10 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
 
     @Override
     public void saveNote(Note note, Promise<Note> promise) {
-        FileIO.write(note.getAbsoluteResourcePath(), note.getContent());
+        String notePath = note.getAbsoluteResourcePath();
+        File enclosingDirectory = new File(notePath).getParentFile();
+        Log.i(TAG, enclosingDirectory.mkdirs() ? "Created directories for path " + notePath : "Didn't create directories for path " + notePath);
+        FileIO.write(notePath, note.getContent());
         promise.resolved(note);
     }
 
