@@ -48,7 +48,7 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
     @Override
     public void createNote(String path, final Promise<Note> promise) {
         Log.i(TAG, "Creating note at path " + path);
-        createOrUpdateNote(path, "", null, new Promise<Note>() {
+        createOrUpdateNote(true, path, "", null, new Promise<Note>() {
             @Override
             public void resolved(Note data) {
                 Log.i(TAG, "Promise resolved");
@@ -63,11 +63,11 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
         });
     }
 
-    private void createOrUpdateNote(final String path, final String content, final String priorContentsSha, final Promise<Note> promise) {
+    private void createOrUpdateNote(final boolean isCreate, final String path, final String content, final String priorContentsSha, final Promise<Note> promise) {
         String base64Encoded = StringUtilities.base64EncodeToString(content);
         Log.i(TAG, "Saving note:\n" + "path: " + path + "\ncontent: " + content + "\nprior sha: " + priorContentsSha);
         mGitHubAPIClient.createOrUpdateFile(owner, repo, path, new GithubAPIRepoItemCreateOrUpdateRequestBody(
-                /* message: */ "create note :: " + path,
+                /* message: */ (isCreate ? "create" : "update") + " note :: " + path,
                 /* base64EncodedContent: */ base64Encoded,
                 /* priorContentsSha: */ priorContentsSha
         )).enqueue(new Callback<GithubAPIRepoItemCreateOrUpdateResponse>() {
@@ -155,7 +155,7 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
     @Override
     public void saveNote(Note note, Promise<Note> promise) {
         Log.i(TAG, "Saving note at path " + note.getAbsoluteResourcePath());
-        createOrUpdateNote(note.getAbsoluteResourcePath(), note.getContent(), note.getSha(), promise);
+        createOrUpdateNote(false, note.getAbsoluteResourcePath(), note.getContent(), note.getSha(), promise);
     }
 
     @Override
@@ -164,7 +164,7 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
         mGitHubAPIClient.deleteFile(owner,  repo,  note.getAbsoluteResourcePath(),
                 new GithubAPIRepoItemDeleteRequestBody(
                         /* message: */ "delete note :: " + note.getAbsoluteResourcePath(),
-                        /* content: */ StringUtilities.sha(note.getContent())
+                        /* sha: */ note.getSha()
                 ))
                 .enqueue(new Callback<Void>() {
                     @Override

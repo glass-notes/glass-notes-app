@@ -25,7 +25,7 @@ public class SelectableTextViewsManager {
         mOnTextViewSelectedListener = onTextViewSelectedListener;
     }
 
-    public void addManagedTextViewChild(TextView textView) {
+    public TextView addManagedTextViewChild(TextView textView) {
 
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         if (mTextViews.size() > 0) {
@@ -34,6 +34,8 @@ public class SelectableTextViewsManager {
 
         mTextViews.add(textView);
         mParentViewGroup.addView(textView);
+
+        return textView;
     }
 
     protected void addViewChild(View view) {
@@ -113,7 +115,7 @@ public class SelectableTextViewsManager {
         textView.setPaintFlags(textView.getPaintFlags() & ~(Paint.UNDERLINE_TEXT_FLAG));
     }
 
-    private void setSelectedTextView(TextView newSelectedTextView) {
+    public void setSelectedTextView(TextView newSelectedTextView) {
         if (mSelectedTextView != null) {
             removeUnderline(mSelectedTextView);
         }

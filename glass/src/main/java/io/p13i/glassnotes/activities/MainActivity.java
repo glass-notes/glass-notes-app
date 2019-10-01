@@ -66,6 +66,11 @@ public class MainActivity extends GlassNotesActivity implements
     SelectableTextViewsManager mSelectableTextViewsManager;
 
     /**
+     * The refresh button
+     */
+    private TextView mRefreshTextView;
+
+    /**
      * Manages the limited view window of notes visible in the GUI
      */
     LimitedViewItemManager<Note> mLimitedViewItemManager;
@@ -117,7 +122,9 @@ public class MainActivity extends GlassNotesActivity implements
      */
     private void populateLayout() {
         // Add the controls
-        mSelectableTextViewsManager = new SelectableTextViewsManager(mLinearLayout, this) {{
+        mSelectableTextViewsManager = new SelectableTextViewsManager(mLinearLayout, this) {
+
+            {
             addManagedTextViewChild(new TextView(MainActivity.this) {{
                 setId(View.generateViewId());
                 setText(R.string.create_new_note);
@@ -136,7 +143,7 @@ public class MainActivity extends GlassNotesActivity implements
                 setTextViewCommonStyles(MainActivity.this, this);
             }});
 
-            addManagedTextViewChild(new TextView(MainActivity.this) {{
+            mRefreshTextView = addManagedTextViewChild(new TextView(MainActivity.this) {{
                 setId(View.generateViewId());
                 setText(R.string.refresh);
                 setTextViewCommonStyles(MainActivity.this, this);
@@ -184,6 +191,7 @@ public class MainActivity extends GlassNotesActivity implements
                         /* maximumCount: */MAX_VISIBLE_NOTES);
 
                 mSelectableTextViewsManager.init();
+                mSelectableTextViewsManager.setSelectedTextView(mRefreshTextView);
 
                 setVisibleNotes();
             }
@@ -246,6 +254,7 @@ public class MainActivity extends GlassNotesActivity implements
                 startQRCodeActivityToGetPreferences();
                 return true;
             } else if (keyCode == KeyEvent.KEYCODE_DEL) {
+                // ctrl-backspace is to delete this note
                 deleteSelectedNote();
                 return true;
             }
@@ -284,7 +293,12 @@ public class MainActivity extends GlassNotesActivity implements
     }
 
     private void deleteSelectedNote() {
-        Note note = getNoteWithTitle(mSelectableTextViewsManager.getSelectedTextView().getText().toString());
+        String noteTitle = mSelectableTextViewsManager.getSelectedTextView().getText().toString();
+        Note note = getNoteWithTitle(noteTitle);
+        if (note == null) {
+            Log.w(TAG, "Didn't find note with title " + noteTitle);
+            return;
+        }
         PreferenceManager.getInstance().getDataStore().deleteNote(note, new Promise() {
             @Override
             public void resolved(Object data) {
