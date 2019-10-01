@@ -3,6 +3,9 @@ package io.p13i.glassnotes.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -171,11 +174,14 @@ public class MainActivity extends GlassNotesActivity implements
     private void reloadNotes() {
         clearNotesFromView();
 
-        String newStatus = PreferenceManager.getInstance()
-                .getDataStore()
-                .getClass()
-                .getSimpleName()
-                .replace(GlassNotesDataStore.class.getSimpleName(), "");
+        String wifiName = getWifiName(this);
+        if (wifiName == null) {
+            Toast.makeText(this, "Not connected to Wi-Fi", Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(this, "Connected to " + wifiName, Toast.LENGTH_SHORT).show();
+        }
+
+        String newStatus = PreferenceManager.getInstance().getDataStore().getName();
         mStatusTextView.setStatus(newStatus);
 
         // Get the notes read the data store
@@ -470,5 +476,25 @@ public class MainActivity extends GlassNotesActivity implements
         }
         return false;
     }
+
+    /**
+     * Source https://stackoverflow.com/a/24326948/5071723
+     * @param context
+     * @return
+     */
+    public String getWifiName(Context context) {
+        WifiManager manager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (manager.isWifiEnabled()) {
+            WifiInfo wifiInfo = manager.getConnectionInfo();
+            if (wifiInfo != null) {
+                NetworkInfo.DetailedState state = WifiInfo.getDetailedStateOf(wifiInfo.getSupplicantState());
+                if (state == NetworkInfo.DetailedState.CONNECTED || state == NetworkInfo.DetailedState.OBTAINING_IPADDR) {
+                    return wifiInfo.getSSID();
+                }
+            }
+        }
+        return null;
+    }
+
 
 }

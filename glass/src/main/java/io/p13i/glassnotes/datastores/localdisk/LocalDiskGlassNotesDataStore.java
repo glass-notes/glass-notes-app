@@ -51,6 +51,11 @@ public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
     }
 
     @Override
+    public String getName() {
+        return "Local Disk";
+    }
+
+    @Override
     public void createNote(String path, Promise<Note> promise) {
         String filename = path;
         if (!path.endsWith(Note.MARKDOWN_EXTENSION)) {

@@ -23,6 +23,11 @@ public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesData
     }
 
     @Override
+    public String getName() {
+        return "GitHub Sync";
+    }
+
+    @Override
     public void createNote(final String path, final Promise<Note> promise) {
         Log.i(TAG, "Creating note at path " + path);
         githubRepoAPIGlassNotesDataStore.createNote(path, new Promise<Note>() {

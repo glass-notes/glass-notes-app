@@ -46,6 +46,11 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
     }
 
     @Override
+    public String getName() {
+        return "GitHub Repo";
+    }
+
+    @Override
     public void createNote(String path, final Promise<Note> promise) {
         Log.i(TAG, "Creating note at path " + path);
         createOrUpdateNote(true, path, "", null, new Promise<Note>() {
@@ -107,11 +112,15 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
                 List<Note> notes = new ArrayList<Note>(repoItems.size());
 
                 for (GitHubAPIRepoItem repoItem : repoItems) {
-                    if (repoItem.mFilename.endsWith(Note.MARKDOWN_EXTENSION)) {
-                        notes.add(new Note(repoItem.mPath,
-                                repoItem.mFilename,
-                                StringUtilities.base64Decode(repoItem.mBase64EncodedContent),
-                                repoItem.mSha));
+                    if (repoItem.mItemType.equals("file")) {
+                        if (repoItem.mFilename.endsWith(Note.MARKDOWN_EXTENSION)) {
+                            notes.add(new Note(repoItem.mPath,
+                                    repoItem.mFilename,
+                                    StringUtilities.base64Decode(repoItem.mBase64EncodedContent),
+                                    repoItem.mSha));
+                        }
+                    } else if (repoItem.mItemType.equals("dir")) {
+                        Log.i(TAG, "Encountered directory " + repoItem.mFilename);
                     }
                 }
 
