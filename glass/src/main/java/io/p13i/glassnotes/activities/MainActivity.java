@@ -27,8 +27,6 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.p13i.glassnotes.R;
-import io.p13i.glassnotes.datastores.GitHubAPISyncLocalDiskGlassNotesDataStore;
-import io.p13i.glassnotes.datastores.GlassNotesDataStore;
 import io.p13i.glassnotes.datastores.Promise;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.ui.StatusTextView;
@@ -286,7 +284,7 @@ public class MainActivity extends GlassNotesActivity implements
                     return false;
                 }
             case KeyEvent.KEYCODE_ENTER:
-                if (mSelectableTextViewsManager.handleEnter()) {
+                if (mSelectableTextViewsManager.handleTap(Gesture.TAP)) {
                     playSound(Sounds.SUCCESS);
                     return true;
                 } else {
@@ -338,7 +336,7 @@ public class MainActivity extends GlassNotesActivity implements
     }
 
     @Override
-    public boolean onTextViewSelected(TextView textView) {
+    public boolean onTextViewSelected(TextView textView, Gesture gesture) {
         String selectedText = textView.getText().toString();
         if (selectedText.equals(getResources().getString(R.string.create_new_note))) {
             Date now = DateUtilities.now();
@@ -375,7 +373,11 @@ public class MainActivity extends GlassNotesActivity implements
             return true;
 
         } else if (getNoteWithTitle(selectedText) != null) {
-            startEditActivityForNote(getNoteWithTitle(selectedText));
+            if (gesture == Gesture.TAP) {
+                startEditActivityForNote(getNoteWithTitle(selectedText));
+            } else if (gesture == Gesture.LONG_PRESS) {
+                startPresentationActivityForNote(getNoteWithTitle(selectedText));
+            }
             return true;
         }
 
@@ -398,6 +400,12 @@ public class MainActivity extends GlassNotesActivity implements
 
     private void startEditActivityForNote(Note note) {
         Intent intent = new Intent(this, EditActivity.class);
+        intent.putExtra(Note.EXTRA_TAG, note);
+        startActivity(intent);
+    }
+
+    private void startPresentationActivityForNote(Note note) {
+        Intent intent = new Intent(this, PresentationActivity.class);
         intent.putExtra(Note.EXTRA_TAG, note);
         startActivity(intent);
     }
@@ -434,7 +442,7 @@ public class MainActivity extends GlassNotesActivity implements
                 public boolean onGesture(Gesture gesture) {
                     if (gesture == Gesture.TAP) {
                         // do something on tap
-                        mSelectableTextViewsManager.handleEnter();
+                        mSelectableTextViewsManager.handleTap(gesture);
                         playSound(Sounds.SUCCESS);
                         return true;
                     } else if (gesture == Gesture.SWIPE_LEFT) {
@@ -455,9 +463,7 @@ public class MainActivity extends GlassNotesActivity implements
                             return false;
                         }
                     } else if (gesture == Gesture.LONG_PRESS) {
-                        reloadNotes();
-                        playSound(Sounds.SUCCESS);
-                        Toast.makeText(MainActivity.this, "Reloaded notes from data store", Toast.LENGTH_LONG).show();
+                        mSelectableTextViewsManager.handleTap(gesture);
                         return true;
                     }
                     return false;

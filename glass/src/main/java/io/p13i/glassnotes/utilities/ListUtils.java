@@ -1,5 +1,6 @@
 package io.p13i.glassnotes.utilities;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,4 +16,5 @@ public class ListUtils {
 
         return resultantList;
     }
+
 }

@@ -10,6 +10,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.p13i.glassnotes.exceptions.GlassNotesRuntimeException;
 
@@ -51,5 +53,21 @@ public class StringUtilities {
         }
         byte[] hash = digest.digest(string.getBytes(StandardCharsets.UTF_8));
         return new String(hash);
+    }
+
+    public static List<Character> asList(String string) {
+        List<Character> characterList = new ArrayList<Character>(string.length());
+        for (int i = 0; i < string.length(); i++) {
+            characterList.add(string.charAt(i));
+        }
+        return characterList;
+    }
+
+    public static String asString(Iterable<Character> characters) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Character c : characters) {
+            stringBuilder.append(c);
+        }
+        return stringBuilder.toString();
     }
 }

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.widget.LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black"
+    tools:context=".activities.PresentationActivity"
+    android:orientation="vertical"
+    android:weightSum="100">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:layout_weight="100">
+
+        <io.p13i.glassnotes.ui.StatusTextView
+            android:id="@+id/activity_presentation_status_text_view"
+            android:typeface="monospace"
+            android:textColor="@color/white"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            tools:ignore="SmallSp" />
+
+        <TextView
+            android:id="@+id/activity_presentation_text_view"
+            android:layout_width="match_parent"
+            android:gravity="top"
+            android:fontFamily="monospace"
+            android:padding="2dp"
+            android:layout_weight="10"
+            android:typeface="monospace"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textCursorDrawable="@null"
+            tools:ignore="SmallSp"
+            android:layout_height="0dp" />
+
+    </LinearLayout>
+
+</android.widget.LinearLayout>

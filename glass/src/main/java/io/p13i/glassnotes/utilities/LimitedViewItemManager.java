@@ -31,4 +31,12 @@ public class LimitedViewItemManager<T> {
     public void scrollDown() {
         mCurrentStartIndex = Math.min(mCurrentStartIndex + 1, mAllStrings.size() - 1);
     }
+
+    public void nextPage() {
+        mCurrentStartIndex = Math.min(mAllStrings.size(), mCurrentStartIndex + mMaximumCount);
+    }
+
+    public void priorPage() {
+        mCurrentStartIndex = Math.max(0, mCurrentStartIndex - mMaximumCount);
+    }
 }

@@ -34,6 +34,7 @@
 * Navigate up by swiping back on the Glass touch pad or pressing `a` on the connected keyboard.
 * Select an underlined item by tapping on the Glass touch page or pressing Enter on the connected keyboard.
 * Load settings from the QR (specified in *Installation*) by tapping on `Load settings →` or pressing `ctrl` and `t` on your keyboard.
+* Double-tap a selected note to enter a read-only presentation mode for it's contents
 
 ### QR Code Reader Activity
 

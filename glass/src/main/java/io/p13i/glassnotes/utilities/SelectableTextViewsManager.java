@@ -6,6 +6,8 @@ import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.google.android.glass.touchpad.Gesture;
+
 import org.w3c.dom.Text;
 
 import java.util.ArrayList;
@@ -85,8 +87,8 @@ public class SelectableTextViewsManager {
         }
     }
 
-    public boolean handleEnter() {
-        return mOnTextViewSelectedListener.onTextViewSelected(getSelectedTextView());
+    public boolean handleTap(Gesture gesture) {
+        return mOnTextViewSelectedListener.onTextViewSelected(getSelectedTextView(), gesture);
     }
 
     private View getNextChild(View afterView) {
@@ -145,6 +147,6 @@ public class SelectableTextViewsManager {
          * @param textView the selected text view
          * @return whether or not the text view was handled by this method
          */
-        boolean onTextViewSelected(TextView textView);
+        boolean onTextViewSelected(TextView textView, Gesture gesture);
     }
 }

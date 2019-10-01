@@ -14,14 +14,17 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <activity android:name=".activities.PresentationActivity"></activity>
         <activity
-            android:name="io.p13i.glassnotes.activities.MainActivity"
-            android:immersive="true"
+            android:name=".activities.MainActivity"
             android:icon="@drawable/ic_glass_logo"
+            android:immersive="true"
             android:label="@string/title_activity_glass_main">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
+
                 <action android:name="com.google.android.glass.action.VOICE_TRIGGER" />
             </intent-filter>
 
