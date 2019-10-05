@@ -3,79 +3,48 @@ package io.p13i.glassnotes.models;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.Serializable;
-import java.util.HashMap;
-
-import io.p13i.glassnotes.datastores.github.File;
-import io.p13i.glassnotes.datastores.github.Gist;
-import io.p13i.glassnotes.utilities.DateUtilities;
 
 public class Note implements Serializable {
+    public static final String MARKDOWN_EXTENSION = ".glass-notes.md";
     public static final String EXTRA_TAG = Note.class.getName();
-    public static final String DEFAULT_CONTENT = "- ";
 
-    @SerializedName("id")
-    public String mId;
+    @SerializedName("absoluteResourcePath")
+    public String mAbsoluteResourcePath;
 
-    @SerializedName("title")
-    public String mTitle;
+    @SerializedName("filename")
+    public String mFilename;
 
-    @SerializedName("mContent")
+    @SerializedName("content")
     public String mContent;
 
-    @SerializedName("created_at")
-    public String mCreatedAt;
+    @SerializedName("sha")
+    public String mSha;
 
-    @SerializedName("updated_at")
-    public String mUpdatedAt;
-
-    public Note(String title) {
-        this(null, title, DEFAULT_CONTENT, DateUtilities.timestamp(), DateUtilities.timestamp());
-    }
-
-    public Note(String id, String title, String content, String createdAt, String updatedAt) {
-        mId = id;
-        mTitle = title;
+    public Note(String absoluteResourcePath, String filename, String content, String sha) {
+        mAbsoluteResourcePath = absoluteResourcePath;
+        mFilename = filename;
         mContent = content;
-        mCreatedAt = createdAt;
-        mUpdatedAt = updatedAt;
+        mSha = sha;
     }
 
-    public String getId() {
-        return this.mId;
+    public String getAbsoluteResourcePath() {
+        return mAbsoluteResourcePath;
     }
 
-    public void setId(String id) {
-        this.mId = id;
-    }
-
-    public String getTitle() {
-        return this.mTitle;
+    public String getFilename() {
+        return mFilename;
     }
 
     public String getContent() {
-        return this.mContent;
+        return mContent;
     }
 
-    public void setContent(String contents) {
-        this.mContent = contents;
-    }
-
-    public Gist asGist() {
-        return new Gist() {{
-            mId = Note.this.mId;
-            mFiles = new HashMap<String, File>() {{
-                put(mTitle, new File() {{
-                    mFilename = Note.this.mTitle;
-                    mContent = Note.this.mContent;
-                }});
-            }};
-            mCreatedAt = Note.this.mCreatedAt;
-            mUpdatedAt = Note.this.mUpdatedAt;
-        }};
+    public String getSha() {
+        return mSha;
     }
 
     @Override
     public String toString() {
-        return this.mTitle;
+        return this.mAbsoluteResourcePath;
     }
 }

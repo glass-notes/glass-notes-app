@@ -12,14 +12,15 @@
 2. Open in Android Studio
 3. Run the application to your Google Glass
 4. Visit GitHub's Token Settings: https://github.com/settings/tokens
-5. Create a token with the `gist :: Create gists` option ticked
+5. Create a token with the `repo :: Full control of private repositories` option ticked
 6. Generate an access token
 7. Visit https://jsoneditoronline.org/ and add the following JSON code:
 ```json
 {
   "savePeriodMs": 5000,
-  "preferredDataStoreName": "GitHubOfflineSyncingDataStore",
-  "githubAccessToken": "GITHUB_ACCESS_TOKEN"
+  "preferredDataStoreName": "GitHubAPISyncLocalDiskGlassNotesDataStore",
+  "githubAccessToken": "GITHUB_ACCESS_TOKEN",
+  "githubRepoOwnerAndPath": "owner/repo"
 }
 ```
 8. Replace the access token with the one you generated above
@@ -31,10 +32,12 @@
 
 ### Main Activity
 
-* Navigate up by swiping forward on the Glass touch pad or pressing `a` on the connected keyboard.
-* Navigate down by swiping back on the Glass touch pad or pressing `d` on the connected keyboard.
+* Navigate down by swiping forward on the Glass touch pad or pressing `d` on the connected keyboard.
+* Navigate up by swiping back on the Glass touch pad or pressing `a` on the connected keyboard.
 * Select an underlined item by tapping on the Glass touch page or pressing Enter on the connected keyboard.
-* Load settings from the QR (specified in *Installation*) by tapping on `Load settings →` or pressing `ctrl` and `t` on your keyboard.
+* Load settings from the QR (specified in *Installation*) by tapping on `Load settings →` or pressing `ctrl` and `q` (for QR) on your keyboard.
+* Delete a selected note by pressing `ctrl` and `delete`/`backspace` on your keyboard.
+* Double-tap a selected note to enter a read-only presentation mode for its contents
 
 ### QR Code Reader Activity
 

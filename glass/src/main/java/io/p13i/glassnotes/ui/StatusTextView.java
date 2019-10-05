@@ -61,7 +61,7 @@ public class StatusTextView extends TextView {
         final int maximumLength = 12;
 
         StringBuilder sb = new StringBuilder();
-        sb.append(mPageTitle.substring(startingAtIndex, Math.min(startingAtIndex + maximumLength, mPageTitle.length())));
+        sb.append(mPageTitle, startingAtIndex, Math.min(startingAtIndex + maximumLength, mPageTitle.length()));
 
         while (sb.length() < maximumLength) {
             sb.append(" ");

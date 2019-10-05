@@ -9,7 +9,7 @@ repositories {
 
 android {
     compileSdkVersion "Google Inc.:Glass Development Kit Preview:19"
-    buildToolsVersion '25.0.0'
+    buildToolsVersion '25.0.3'
     defaultConfig {
         applicationId "io.p13i.glassnotes"
         minSdkVersion 19
@@ -23,13 +23,23 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/NOTICE'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE.txt'
+    }
 }
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
 
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
     compile 'com.squareup.picasso:picasso:2.5.2'
 
+    //noinspection GradleDependency
     compile 'me.dm7.barcodescanner:zbar:1.9.8'
 
     compile 'com.squareup.retrofit2:retrofit:2.3.0'
@@ -38,4 +48,6 @@ dependencies {
 
     compile 'com.jakewharton:butterknife:8.8.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
+
+    compile group: 'org.kohsuke', name: 'github-api', version: '1.95'
 }

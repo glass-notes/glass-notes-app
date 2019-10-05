@@ -6,6 +6,8 @@ import android.view.ViewGroup;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
+import com.google.android.glass.touchpad.Gesture;
+
 import org.w3c.dom.Text;
 
 import java.util.ArrayList;
@@ -25,7 +27,7 @@ public class SelectableTextViewsManager {
         mOnTextViewSelectedListener = onTextViewSelectedListener;
     }
 
-    public void addManagedTextViewChild(TextView textView) {
+    public TextView addManagedTextViewChild(TextView textView) {
 
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         if (mTextViews.size() > 0) {
@@ -34,6 +36,8 @@ public class SelectableTextViewsManager {
 
         mTextViews.add(textView);
         mParentViewGroup.addView(textView);
+
+        return textView;
     }
 
     protected void addViewChild(View view) {
@@ -83,8 +87,8 @@ public class SelectableTextViewsManager {
         }
     }
 
-    public boolean handleEnter() {
-        return mOnTextViewSelectedListener.onTextViewSelected(getSelectedTextView());
+    public boolean handleTap(Gesture gesture) {
+        return mOnTextViewSelectedListener.onTextViewSelected(getSelectedTextView(), gesture);
     }
 
     private View getNextChild(View afterView) {
@@ -113,7 +117,7 @@ public class SelectableTextViewsManager {
         textView.setPaintFlags(textView.getPaintFlags() & ~(Paint.UNDERLINE_TEXT_FLAG));
     }
 
-    private void setSelectedTextView(TextView newSelectedTextView) {
+    public void setSelectedTextView(TextView newSelectedTextView) {
         if (mSelectedTextView != null) {
             removeUnderline(mSelectedTextView);
         }
@@ -123,13 +127,13 @@ public class SelectableTextViewsManager {
         mSelectedTextView = newSelectedTextView;
     }
 
-    private TextView getSelectedTextView() {
+    public TextView getSelectedTextView() {
         return mSelectedTextView;
     }
 
     private TextView mSelectedTextView;
 
-    protected void init() {
+    public void init() {
         setSelectedTextView(mTextViews.get(0));
         for (int i = 1; i < mTextViews.size(); i++) {
             removeUnderline(mTextViews.get(i));
@@ -140,9 +144,10 @@ public class SelectableTextViewsManager {
 
         /**
          * Handles selection of a text view
+         *
          * @param textView the selected text view
          * @return whether or not the text view was handled by this method
          */
-        boolean onTextViewSelected(TextView textView);
+        boolean onTextViewSelected(TextView textView, Gesture gesture);
     }
 }

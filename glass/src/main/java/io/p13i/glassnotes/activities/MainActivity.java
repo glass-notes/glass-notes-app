@@ -3,6 +3,9 @@ package io.p13i.glassnotes.activities;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -44,7 +47,7 @@ public class MainActivity extends GlassNotesActivity implements
     private static final int MAX_VISIBLE_NOTES = 3;
 
     /**
-     * Used to get results from the QR-code reading activity
+     * Used to get results read the QR-code reading activity
      */
     private static final int SETTINGS_QR_CODE_READER_RESULT_CODE = 0xc0de;
 
@@ -64,6 +67,11 @@ public class MainActivity extends GlassNotesActivity implements
     SelectableTextViewsManager mSelectableTextViewsManager;
 
     /**
+     * The refresh button
+     */
+    private TextView mRefreshTextView;
+
+    /**
      * Manages the limited view window of notes visible in the GUI
      */
     LimitedViewItemManager<Note> mLimitedViewItemManager;
@@ -77,16 +85,9 @@ public class MainActivity extends GlassNotesActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // full screen, no app bar
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
         // Bind to views
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-
-        // Key the screen on
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mGestureDetector = createGestureDetector(this);
 
@@ -97,14 +98,16 @@ public class MainActivity extends GlassNotesActivity implements
         // Add views
         populateLayout();
 
-        // Try to load the user's preferences from the disk
+        // Try to load the user's preferences read the disk
         if (PreferenceManager.getInstance().loadFromSystem(this)) {
-            Toast.makeText(this, "Loaded preferences from disk", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Loaded preferences read disk", Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(this, "Failed to load preferences from disk", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Failed to load preferences read disk", Toast.LENGTH_SHORT).show();
         }
 
-        // Fetch from the data store and load into the UI
+        PreferenceManager.getInstance().init(this);
+
+        // Fetch read the data store and load into the UI
         reloadNotes();
     }
 
@@ -113,65 +116,81 @@ public class MainActivity extends GlassNotesActivity implements
      */
     private void populateLayout() {
         // Add the controls
-        mSelectableTextViewsManager = new SelectableTextViewsManager(mLinearLayout, this) {{
-            addManagedTextViewChild(new TextView(MainActivity.this) {{
-                setId(View.generateViewId());
-                setText(R.string.create_new_note);
-                setTextViewCommonStyles(MainActivity.this, this);
-            }});
+        mSelectableTextViewsManager = new SelectableTextViewsManager(mLinearLayout, this) {
 
-            addManagedTextViewChild(new TextView(MainActivity.this) {{
-                setId(View.generateViewId());
-                setText(R.string.add_new_todo);
-                setTextViewCommonStyles(MainActivity.this, this);
-            }});
+            {
+                addManagedTextViewChild(new TextView(MainActivity.this) {{
+                    setId(View.generateViewId());
+                    setText(R.string.create_new_note);
+                    setTextViewCommonStyles(MainActivity.this, this);
+                }});
 
-            addManagedTextViewChild(new TextView(MainActivity.this) {{
-                setId(View.generateViewId());
-                setText(R.string.load_settings);
-                setTextViewCommonStyles(MainActivity.this, this);
-            }});
+                addManagedTextViewChild(new TextView(MainActivity.this) {{
+                    setId(View.generateViewId());
+                    setText(R.string.add_new_todo);
+                    setTextViewCommonStyles(MainActivity.this, this);
+                }});
 
-            addManagedTextViewChild(new TextView(MainActivity.this) {{
-                setId(View.generateViewId());
-                setText(R.string.add_existing);
-                setTextViewCommonStyles(MainActivity.this, this);
-            }});
+                addManagedTextViewChild(new TextView(MainActivity.this) {{
+                    setId(View.generateViewId());
+                    setText(R.string.load_settings);
+                    setTextViewCommonStyles(MainActivity.this, this);
+                }});
 
-            addManagedTextViewChild(new TextView(MainActivity.this) {{
-                setId(View.generateViewId());
-                setText("▲");
-                setTextViewCommonStyles(MainActivity.this, this);
-            }});
+                mRefreshTextView = addManagedTextViewChild(new TextView(MainActivity.this) {{
+                    setId(View.generateViewId());
+                    setText(R.string.refresh);
+                    setTextViewCommonStyles(MainActivity.this, this);
+                }});
 
-            addManagedTextViewChild(new TextView(MainActivity.this) {{
-                setId(View.generateViewId());
-                setText("▼");
-                setTextViewCommonStyles(MainActivity.this, this);
-            }});
+                addManagedTextViewChild(new TextView(MainActivity.this) {{
+                    setId(View.generateViewId());
+                    setText("▲");
+                    setTextViewCommonStyles(MainActivity.this, this);
+                }});
 
-            init();
-        }};
+                addManagedTextViewChild(new TextView(MainActivity.this) {{
+                    setId(View.generateViewId());
+                    setText("▼");
+                    setTextViewCommonStyles(MainActivity.this, this);
+                }});
+
+                init();
+            }
+        };
     }
 
     /**
-     * Reloads all notes from the data store
+     * Reloads all notes read the data store
      */
     private void reloadNotes() {
         clearNotesFromView();
 
-        // Get the notes from the data store
+        String wifiName = getWifiName(this);
+        if (wifiName == null) {
+            Toast.makeText(this, "Not connected to Wi-Fi", Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(this, "Connected to " + wifiName, Toast.LENGTH_SHORT).show();
+        }
+
+        String newStatus = PreferenceManager.getInstance().getDataStore().getName();
+        mStatusTextView.setStatus(newStatus);
+
+        // Get the notes read the data store
         PreferenceManager.getInstance().getDataStore().getNotes(new Promise<List<Note>>() {
             @Override
             public void resolved(List<Note> data) {
                 // Set status elements
                 mStatusTextView.setPageTitle("Welcome to GlassNotes!");
-                mStatusTextView.setStatus(PreferenceManager.getInstance().getDataStore().getShortName());
 
                 mNotes = data;
                 // Display the notes in the GUI
                 mLimitedViewItemManager = new LimitedViewItemManager<Note>(mNotes,
                         /* maximumCount: */MAX_VISIBLE_NOTES);
+
+                mSelectableTextViewsManager.init();
+                mSelectableTextViewsManager.setSelectedTextView(mRefreshTextView);
+
                 setVisibleNotes();
             }
 
@@ -184,7 +203,7 @@ public class MainActivity extends GlassNotesActivity implements
     }
 
     /**
-     * Removes all the notes from the view after the arrow selectors
+     * Removes all the notes read the view after the arrow selectors
      */
     private void clearNotesFromView() {
         final int INDEX_AFTER_ARROWS = 7;
@@ -206,7 +225,7 @@ public class MainActivity extends GlassNotesActivity implements
                 public void run() {
                     mSelectableTextViewsManager.addManagedTextViewChild(new TextView(MainActivity.this) {{
                         setId(View.generateViewId());
-                        setText(note.getTitle());
+                        setText(note.getFilename().replace(Note.MARKDOWN_EXTENSION, ""));
                         setTextViewCommonStyles(MainActivity.this, this);
                     }});
                 }
@@ -216,7 +235,8 @@ public class MainActivity extends GlassNotesActivity implements
 
     /**
      * Sets the terminal-like style for a text view
-     * @param context the activity context
+     *
+     * @param context  the activity context
      * @param textView the text view to update styles for
      */
     private static void setTextViewCommonStyles(Context context, TextView textView) {
@@ -229,8 +249,12 @@ public class MainActivity extends GlassNotesActivity implements
     public boolean onKeyUp(int keyCode, KeyEvent event) {
 
         if (event.isCtrlPressed()) {
-            if (keyCode == KeyEvent.KEYCODE_T) {
+            if (keyCode == KeyEvent.KEYCODE_Q) {
                 startQRCodeActivityToGetPreferences();
+                return true;
+            } else if (keyCode == KeyEvent.KEYCODE_DEL) {
+                // ctrl-backspace is to delete this note
+                deleteSelectedNote();
                 return true;
             }
         }
@@ -255,7 +279,7 @@ public class MainActivity extends GlassNotesActivity implements
                     return false;
                 }
             case KeyEvent.KEYCODE_ENTER:
-                if (mSelectableTextViewsManager.handleEnter()) {
+                if (mSelectableTextViewsManager.handleTap(Gesture.TAP)) {
                     playSound(Sounds.SUCCESS);
                     return true;
                 } else {
@@ -265,6 +289,27 @@ public class MainActivity extends GlassNotesActivity implements
             default:
                 return super.onKeyUp(keyCode, event);
         }
+    }
+
+    private void deleteSelectedNote() {
+        String noteTitle = mSelectableTextViewsManager.getSelectedTextView().getText().toString();
+        Note note = getNoteWithTitle(noteTitle);
+        if (note == null) {
+            Log.w(TAG, "Didn't find note with title " + noteTitle);
+            return;
+        }
+        PreferenceManager.getInstance().getDataStore().deleteNote(note, new Promise() {
+            @Override
+            public void resolved(Object data) {
+                reloadNotes();
+                playSound(Sounds.SUCCESS);
+            }
+
+            @Override
+            public void rejected(Throwable t) {
+                playSound(Sounds.ERROR);
+            }
+        });
     }
 
     private void startQRCodeActivityToGetPreferences() {
@@ -278,7 +323,7 @@ public class MainActivity extends GlassNotesActivity implements
      */
     private Note getNoteWithTitle(String title) {
         for (Note note : mNotes) {
-            if (note.getTitle().equals(title)) {
+            if (note.getFilename().equals(title + Note.MARKDOWN_EXTENSION)) {
                 return note;
             }
         }
@@ -286,25 +331,23 @@ public class MainActivity extends GlassNotesActivity implements
     }
 
     @Override
-    public boolean onTextViewSelected(TextView textView) {
+    public boolean onTextViewSelected(TextView textView, Gesture gesture) {
         String selectedText = textView.getText().toString();
         if (selectedText.equals(getResources().getString(R.string.create_new_note))) {
-            Date now = DateUtilities.now();
-            String title = DateUtilities.formatDate(now, "yyyy-MM-dd") + " | " + DateUtilities.formatDate(now, "HH:mm:ss") + " | New note";
-            startEditActivityForNewNote(title);
+            String title = generateNewNoteFilename("note");
+            startEditActivityForNewNoteWithPath(title + Note.MARKDOWN_EXTENSION);
             return true;
 
         } else if (selectedText.equals(getResources().getString(R.string.add_new_todo))) {
-            Date now = DateUtilities.now();
-            String title = DateUtilities.formatDate(now, "yyyy-MM-dd") + " | " + DateUtilities.formatDate(now, "HH:mm:ss") + " | New TODO";
-            startEditActivityForNewNote(title);
+            String title = generateNewNoteFilename("TODO");
+            startEditActivityForNewNoteWithPath(title + Note.MARKDOWN_EXTENSION);
             return true;
 
         } else if (selectedText.equals(getResources().getString(R.string.load_settings))) {
             startQRCodeActivityToGetPreferences();
             return true;
 
-        }  else if (selectedText.equals(getResources().getString(R.string.add_existing))) {
+        } else if (selectedText.equals(getResources().getString(R.string.refresh))) {
             reloadNotes();
             return true;
 
@@ -323,16 +366,24 @@ public class MainActivity extends GlassNotesActivity implements
             return true;
 
         } else if (getNoteWithTitle(selectedText) != null) {
-            startEditActivityForNote(getNoteWithTitle(selectedText));
+            if (gesture == Gesture.TAP) {
+                startEditActivityForNote(getNoteWithTitle(selectedText));
+            } else if (gesture == Gesture.LONG_PRESS) {
+                startPresentationActivityForNote(getNoteWithTitle(selectedText));
+            }
             return true;
         }
 
         return false;
     }
 
-    private void startEditActivityForNewNote(String title) {
-        Note note = new Note(null, title, Note.DEFAULT_CONTENT, DateUtilities.timestamp(), DateUtilities.timestamp());
-        PreferenceManager.getInstance().getDataStore().createNote(note, new Promise<Note>() {
+    private static String generateNewNoteFilename(String noteType) {
+        Date now = DateUtilities.now();
+        return DateUtilities.formatDate(now, "yyyy-MM-dd") + " " + DateUtilities.formatDate(now, "HH:mm:ss") + " New " + noteType;
+    }
+
+    private void startEditActivityForNewNoteWithPath(String path) {
+        PreferenceManager.getInstance().getDataStore().createNote(path, new Promise<Note>() {
             @Override
             public void resolved(Note data) {
                 startEditActivityForNote(data);
@@ -351,18 +402,29 @@ public class MainActivity extends GlassNotesActivity implements
         startActivity(intent);
     }
 
+    private void startPresentationActivityForNote(Note note) {
+        Intent intent = new Intent(this, PresentationActivity.class);
+        intent.putExtra(Note.EXTRA_TAG, note);
+        startActivity(intent);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == SETTINGS_QR_CODE_READER_RESULT_CODE) {
             if (resultCode == RESULT_OK) {
                 String qrCodeData = data.getStringExtra(QRCodeReaderActivity.INTENT_RESULT_KEY);
-                if (PreferenceManager.getInstance().setFromJsonString(this, qrCodeData)) {
-                    Log.i(TAG, "Saved from preferences");
-                    PreferenceManager.getInstance().saveToSystem(this);
-                    playSound(Sounds.SUCCESS);
-                    reloadNotes();
+                if (PreferenceManager.getInstance().setFromJsonString(getApplicationContext(), qrCodeData)) {
+
+                    Log.i(TAG, "Saved read preferences");
+
+                    if (PreferenceManager.getInstance().saveToSystem(getApplicationContext())) {
+                        Toast.makeText(this, "Saved preferences to system", Toast.LENGTH_SHORT).show();
+                        playSound(Sounds.SUCCESS);
+                        reloadNotes();
+                    }
+
                 } else {
-                    Log.e(TAG, "Failed to save from preferences");
+                    Log.e(TAG, "Failed to save read preferences");
                     playSound(Sounds.ERROR);
                 }
             }
@@ -373,15 +435,15 @@ public class MainActivity extends GlassNotesActivity implements
 
     private GestureDetector createGestureDetector(Context context) {
         return new GestureDetector(context) {{
-            setBaseListener( new GestureDetector.BaseListener() {
+            setBaseListener(new GestureDetector.BaseListener() {
                 @Override
                 public boolean onGesture(Gesture gesture) {
                     if (gesture == Gesture.TAP) {
                         // do something on tap
-                        mSelectableTextViewsManager.handleEnter();
+                        mSelectableTextViewsManager.handleTap(gesture);
                         playSound(Sounds.SUCCESS);
                         return true;
-                    } else if (gesture == Gesture.SWIPE_RIGHT) {
+                    } else if (gesture == Gesture.SWIPE_LEFT) {
                         if (mSelectableTextViewsManager.handleUpRequest()) {
                             playSound(Sounds.TAP);
                             return true;
@@ -389,7 +451,7 @@ public class MainActivity extends GlassNotesActivity implements
                             playSound(Sounds.ERROR);
                             return false;
                         }
-                    } else if (gesture == Gesture.SWIPE_LEFT) {
+                    } else if (gesture == Gesture.SWIPE_RIGHT) {
                         // do something on left (backwards) swipe
                         if (mSelectableTextViewsManager.handleDownRequest()) {
                             playSound(Sounds.TAP);
@@ -398,6 +460,9 @@ public class MainActivity extends GlassNotesActivity implements
                             playSound(Sounds.ERROR);
                             return false;
                         }
+                    } else if (gesture == Gesture.LONG_PRESS) {
+                        mSelectableTextViewsManager.handleTap(gesture);
+                        return true;
                     }
                     return false;
                 }
@@ -415,5 +480,26 @@ public class MainActivity extends GlassNotesActivity implements
         }
         return false;
     }
+
+    /**
+     * Source https://stackoverflow.com/a/24326948/5071723
+     *
+     * @param context
+     * @return
+     */
+    public String getWifiName(Context context) {
+        WifiManager manager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+        if (manager.isWifiEnabled()) {
+            WifiInfo wifiInfo = manager.getConnectionInfo();
+            if (wifiInfo != null) {
+                NetworkInfo.DetailedState state = WifiInfo.getDetailedStateOf(wifiInfo.getSupplicantState());
+                if (state == NetworkInfo.DetailedState.CONNECTED || state == NetworkInfo.DetailedState.OBTAINING_IPADDR) {
+                    return wifiInfo.getSSID();
+                }
+            }
+        }
+        return null;
+    }
+
 
 }

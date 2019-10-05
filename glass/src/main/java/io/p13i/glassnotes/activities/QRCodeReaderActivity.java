@@ -6,6 +6,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
 import android.widget.Toast;
@@ -14,6 +16,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.p13i.glassnotes.R;
 import io.p13i.glassnotes.camera.CameraPreview;
+import io.p13i.glassnotes.utilities.CameraUtilities;
 
 import net.sourceforge.zbar.ImageScanner;
 import net.sourceforge.zbar.Image;
@@ -24,7 +27,7 @@ import net.sourceforge.zbar.Config;
 import java.util.Iterator;
 
 /**
- * Reads a QR code from the camera.
+ * Reads a QR code read the camera.
  * Based on https://github.com/jzplusplus/GlassWifiConnect/blob/96d8d67f79c209e204d5b728498cd4899c2640c0/src/com/jzplusplus/glasswificonnect/MainActivity.java
  */
 public class QRCodeReaderActivity extends GlassNotesActivity {
@@ -42,6 +45,8 @@ public class QRCodeReaderActivity extends GlassNotesActivity {
     @BindView(R.id.camera_preview)
     FrameLayout mCameraPreviewFrameLayout;
 
+    LayoutInflater controlInflater = null;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,14 +58,37 @@ public class QRCodeReaderActivity extends GlassNotesActivity {
         this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Full screen
-        this.getActionBar().hide();
+        if (this.getActionBar() != null) {
+            this.getActionBar().hide();
+        }
 
         mAutoFocusHandler = new Handler();
 
-        mCamera = Camera.open();
+        if (mCamera != null) {
+            mCamera.release();
+            mCamera = null;
+        }
+
+        try {
+            Log.i(TAG, "Cameras available " + Camera.getNumberOfCameras());
+            for (int i = 0; i < Camera.getNumberOfCameras(); i++) {
+                Camera.CameraInfo cameraInfo = new Camera.CameraInfo();
+                Camera.getCameraInfo(i, cameraInfo);
+                Log.i(TAG, "Camera: facing " + cameraInfo.facing + ", orientation " + cameraInfo.orientation);
+            }
+
+            mCamera = CameraUtilities.open();
+
+        } catch (RuntimeException e) {
+            Log.e(TAG, "Failed to acquire camera", e);
+            mCamera = null;
+        } catch (InterruptedException e) {
+            Log.e(TAG, "Failed to acquire camera: interrrupted", e);
+            mCamera = null;
+        }
 
         if (mCamera == null) {
-            Toast.makeText(this, "Camera cannot be locked", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Failed to acquire camera", Toast.LENGTH_SHORT).show();
             finish();
         }
 
@@ -73,6 +101,14 @@ public class QRCodeReaderActivity extends GlassNotesActivity {
         mCameraPreview = new CameraPreview(this, mCamera, mCameraPreviewCallback, mAutoFocusCallBack);
 
         mCameraPreviewFrameLayout.addView(mCameraPreview);
+
+        controlInflater = LayoutInflater.from(getBaseContext());
+        View viewControl = controlInflater.inflate(R.layout.qr_code_reader_bounding_box, null);
+        WindowManager.LayoutParams layoutParamsControl
+                = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.FILL_PARENT,
+                WindowManager.LayoutParams.FILL_PARENT);
+        this.addContentView(viewControl, layoutParamsControl);
 
         super.onCreate(savedInstanceState);
     }
@@ -125,4 +161,14 @@ public class QRCodeReaderActivity extends GlassNotesActivity {
             finish();
         }
     };
+
+    @Override
+    public void finish() {
+        if (mCamera != null) {
+            mCamera.release();
+            mCamera = null;
+        }
+
+        super.finish();
+    }
 }

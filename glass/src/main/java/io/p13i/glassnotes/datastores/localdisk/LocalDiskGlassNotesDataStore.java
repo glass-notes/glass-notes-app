@@ -4,135 +4,105 @@ import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
 
-import com.google.gson.Gson;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import io.p13i.glassnotes.datastores.GlassNotesDataStore;
+import io.p13i.glassnotes.datastores.GlassNotesDataStoreException;
 import io.p13i.glassnotes.datastores.Promise;
-import io.p13i.glassnotes.datastores.github.ClientFactory;
 import io.p13i.glassnotes.models.Note;
-import io.p13i.glassnotes.utilities.Assert;
+import io.p13i.glassnotes.utilities.FileIO;
 
-public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore {
+public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
     private static final String TAG = LocalDiskGlassNotesDataStore.class.getName();
+    private static final String LOCAL_STORAGE_DIRECTORY = "glass-notes";
 
     private Context mContext;
 
     public LocalDiskGlassNotesDataStore(Context context) {
+        if (!isExternalStorageWritable()) {
+            throw new GlassNotesDataStoreException("External storage must be writable.");
+        }
         mContext = context;
-
-        Assert.that(isExternalStorageWritable());
     }
 
     /**
      * Checks if external storage is available for read and write
      * https://developer.android.com/training/data-storage/files#CheckExternalAvail
      *
-     * @return
+     * @return whether or not the storage is writable
      */
     private boolean isExternalStorageWritable() {
-        String state = Environment.getExternalStorageState();
-        return Environment.MEDIA_MOUNTED.equals(state);
+        return Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED);
     }
 
     /**
      * https://developer.android.com/training/data-storage/files#PrivateFiles
      *
-     * @return
+     * @return the storage directory for this application
      */
-    private File getStorageDirectory() {
+    public File getStorageDirectory() {
         // Get the directory for the app's private pictures directory.
-        File file = new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "glass-notes");
-        Log.i(TAG, file.mkdir() ? "Directory created" : "Directory not created");
+        File file = new File(mContext.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), LOCAL_STORAGE_DIRECTORY);
+        Log.i(TAG, (file.mkdirs() ? "Directories created" : "Directories not created") + " for path " + file.getAbsolutePath());
         return file;
     }
 
-    private void write(String toFile, String data) {
-        File file = new File(getStorageDirectory(), toFile);
-
-        try {
-            file.createNewFile();
-            FileOutputStream stream = new FileOutputStream(file, /* append: */false);
-            stream.write(data.getBytes());
-            stream.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private String read(String fromFile) {
-        File file = new File(getStorageDirectory(), fromFile);
-        return read(file);
-    }
-
-    private String read(File file) {
-        int length = (int) file.length();
-
-        byte[] bytes = new byte[length];
-
-        try {
-            FileInputStream in = new FileInputStream(file);
-            in.read(bytes);
-            in.close();
-        } catch (IOException e) {
-            return null;
-        }
-
-        return new String(bytes);
-    }
-
-    private static String generateTemporaryId() {
-        return "TEMP-" + UUID.randomUUID().toString();
+    @Override
+    public String getName() {
+        return "Local Disk";
     }
 
     @Override
-    public String getShortName() {
-        return "LocalDisk";
-    }
-
-    @Override
-    public void createNote(Note note, Promise<Note> promise) {
-        Gson gson = ClientFactory.getGson();
-        note.setId(generateTemporaryId());
-        write(note.getId(), gson.toJson(note));
-        promise.resolved(note);
+    public void createNote(String path, Promise<Note> promise) {
+        String filename = path;
+        if (!path.endsWith(Note.MARKDOWN_EXTENSION)) {
+            filename += Note.MARKDOWN_EXTENSION;
+        }
+        String absoluteFilePath = new File(getStorageDirectory(), filename).getAbsolutePath();
+        String content = "";
+        FileIO.write(absoluteFilePath, content);
+        promise.resolved(new Note(absoluteFilePath, filename, content, null));
     }
 
     @Override
     public void getNotes(Promise<List<Note>> promise) {
-        Gson gson = ClientFactory.getGson();
 
         List<Note> notes = new ArrayList<Note>();
+
         File[] files = getStorageDirectory().listFiles();
+
         for (File noteFile : files) {
-            notes.add(gson.fromJson(read(noteFile), Note.class));
+            if (noteFile.getName().endsWith(Note.MARKDOWN_EXTENSION)) {
+                notes.add(new Note(noteFile.getAbsolutePath(), noteFile.getName(), FileIO.read(noteFile), null));
+                Log.i(TAG, "Added file " + noteFile.getAbsolutePath());
+            } else {
+                Log.i(TAG, "Skipping file " + noteFile.getAbsolutePath());
+            }
         }
 
         promise.resolved(notes);
     }
 
     @Override
-    public void getNote(String id, Promise<Note> promise) {
-        String fileContents = read(id);
-        if (fileContents == null) {
-            promise.rejected(new Throwable());
-        }
-        Gson gson = ClientFactory.getGson();
-        Note note = gson.fromJson(fileContents, Note.class);
-        promise.resolved(note);
+    public void getNote(String path, Promise<Note> promise) {
+        File noteFile = new File(path);
+        promise.resolved(new Note(noteFile.getAbsolutePath(), noteFile.getName(), FileIO.read(noteFile), null));
     }
 
     @Override
     public void saveNote(Note note, Promise<Note> promise) {
-        Gson gson = ClientFactory.getGson();
-        write(note.getId(), gson.toJson(note));
+        String notePath = note.getAbsoluteResourcePath();
+        File enclosingDirectory = new File(notePath).getParentFile();
+        Log.i(TAG, enclosingDirectory.mkdirs() ? "Created directories for path " + notePath : "Didn't create directories for path " + notePath);
+        FileIO.write(notePath, note.getContent());
         promise.resolved(note);
+    }
+
+    @Override
+    public void deleteNote(Note note, Promise<Boolean> promise) {
+        promise.resolved(FileIO.delete(note.getAbsoluteResourcePath()));
     }
 }

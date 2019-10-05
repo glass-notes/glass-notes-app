@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/black"
-    tools:context=".activities.EditActivity"
+    tools:context=".activities.PresentationActivity"
     android:orientation="vertical"
     android:weightSum="100">
 
@@ -16,7 +16,7 @@
         android:layout_weight="100">
 
         <io.p13i.glassnotes.ui.StatusTextView
-            android:id="@+id/activity_edit_status"
+            android:id="@+id/activity_presentation_status_text_view"
             android:typeface="monospace"
             android:textColor="@color/white"
             android:layout_width="match_parent"
@@ -24,12 +24,11 @@
             android:layout_weight="1"
             tools:ignore="SmallSp" />
 
-        <EditText
-            android:id="@+id/note_edit_text"
+        <TextView
+            android:id="@+id/activity_presentation_text_view"
             android:layout_width="match_parent"
             android:gravity="top"
             android:fontFamily="monospace"
-            android:inputType="textFilter|textMultiLine|textNoSuggestions"
             android:padding="2dp"
             android:layout_weight="10"
             android:typeface="monospace"

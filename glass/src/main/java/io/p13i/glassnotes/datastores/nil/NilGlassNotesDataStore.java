@@ -11,33 +11,36 @@ import io.p13i.glassnotes.models.Note;
 /**
  * Returns an empty list in getNotes. All other methods are rejected promises.
  */
-public class NilDataStore implements GlassNotesDataStore {
-    private static Throwable sCommonException = new RuntimeException("You're using the " + NilDataStore.class.getSimpleName());
+public class NilGlassNotesDataStore implements GlassNotesDataStore<Note> {
+    private static Throwable sCommonException = new RuntimeException("You're using the " + NilGlassNotesDataStore.class.getSimpleName());
 
     @Override
-    public String getShortName() {
+    public String getName() {
         return "Nil";
     }
 
     @Override
-    public void createNote(Note note, Promise<Note> promise) {
+    public void createNote(String title, Promise<Note> promise) {
         promise.rejected(sCommonException);
     }
 
     @Override
     public void getNotes(Promise<List<Note>> promise) {
-        promise.resolved(new ArrayList<Note>(1) {{
-            add(new Note("Using nil data store, no notes..."));
-        }});
+        promise.resolved(new ArrayList<Note>(0));
     }
 
     @Override
-    public void getNote(String id, Promise<Note> promise) {
+    public void getNote(String path, Promise<Note> promise) {
         promise.rejected(sCommonException);
     }
 
     @Override
     public void saveNote(Note note, Promise<Note> promise) {
+        promise.rejected(sCommonException);
+    }
+
+    @Override
+    public void deleteNote(Note note, Promise<Boolean> promise) {
         promise.rejected(sCommonException);
     }
 }
