@@ -9,7 +9,7 @@ repositories {
 
 android {
     compileSdkVersion "Google Inc.:Glass Development Kit Preview:19"
-    buildToolsVersion '25.0.0'
+    buildToolsVersion '25.0.3'
     defaultConfig {
         applicationId "io.p13i.glassnotes"
         minSdkVersion 19
