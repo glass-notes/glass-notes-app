@@ -5,4 +5,5 @@ android:
     - extra-android-support
     - addon-google_gdk-google-19
 install:
-  - yes | sdkmanager --licenses
+  - yes | $ANDROID_HOME/tools/bin/sdkmanager "build-tools;25.0.2"
+
