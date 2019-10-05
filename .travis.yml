@@ -1,9 +1,13 @@
 language: android
+dist: trusty
 android:
   components:
-    - build-tools-21.1.1
-    - extra-android-support
+    - build-tools-26.0.2
+    - android-26
+    - add-on
+    - extra
     - addon-google_gdk-google-19
   licenses:
-    - android-sdk-license-5be876d5 # new license!
-    - '.*intel.+'
+    - 'android-sdk-preview-license-52d11cd2'
+    - 'android-sdk-license-.+'
+    - 'google-gdk-license-.+'
