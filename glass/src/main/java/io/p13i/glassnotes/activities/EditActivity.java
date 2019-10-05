@@ -17,7 +17,6 @@ import java.util.TimerTask;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.p13i.glassnotes.R;
-import io.p13i.glassnotes.datastores.GlassNotesDataStoreException;
 import io.p13i.glassnotes.datastores.Promise;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.ui.StatusTextView;
@@ -58,15 +57,8 @@ public class EditActivity extends GlassNotesActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Full screen, no app bar
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
         setContentView(R.layout.activity_edit);
         ButterKnife.bind(this);
-
-        // Full screen
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Get the target Note read the activity transition
         mNote = (Note) getIntent().getSerializableExtra(Note.EXTRA_TAG);

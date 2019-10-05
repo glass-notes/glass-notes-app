@@ -89,7 +89,7 @@ public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesData
     }
 
     @Override
-    public void saveNote(Note note, final Promise<Note> promise) {
+    public void saveNote(final Note note, final Promise<Note> promise) {
         Log.i(TAG, "Saving note with path " + note.getAbsoluteResourcePath());
 
         // Remove the local disk directory if it exists in the path
@@ -112,15 +112,26 @@ public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesData
             @Override
             public void rejected(Throwable t) {
                 Log.e(TAG, "Failed to save to GitHub, trying local disk for note with path " + noteToSave.getAbsoluteResourcePath(), t);
-                String noteFilePath = new File(localDiskGlassNotesDataStore.getStorageDirectory(), getLocalDiskNoteFallbackBaseFilename(noteToSave)).getAbsolutePath();
+                // Delete the existing note
+                String noteFilename = getLocalDiskNoteFallbackBaseFilename(noteToSave);
+                String noteFilePath = new File(localDiskGlassNotesDataStore.getStorageDirectory(), noteFilename).getAbsolutePath();
                 localDiskGlassNotesDataStore.saveNote(new Note(
                         noteFilePath,
-                        noteToSave.getFilename(),
+                        noteFilename,
                         noteToSave.getContent(),
                         noteToSave.getSha()), new Promise<Note>() {
                     @Override
                     public void resolved(Note data) {
                         Log.i(TAG, "Saved note to local disk for note with path " + data.getAbsoluteResourcePath());
+
+                        if (!note.getFilename().equals(data.getFilename())) {
+                            if (FileIO.delete(note.getAbsoluteResourcePath())) {
+                                Log.i(TAG, "Deleted old note with name " + note.getFilename());
+                            } else {
+                                Log.e(TAG, "Failed to delete old note with path " + note.getFilename());
+                            }
+                        }
+
                         promise.resolved(data);
                     }
 
