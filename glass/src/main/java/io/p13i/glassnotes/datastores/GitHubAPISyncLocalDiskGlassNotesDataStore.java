@@ -9,6 +9,7 @@ import java.util.List;
 import io.p13i.glassnotes.datastores.github.GithubRepoAPIGlassNotesDataStore;
 import io.p13i.glassnotes.datastores.localdisk.LocalDiskGlassNotesDataStore;
 import io.p13i.glassnotes.models.Note;
+import io.p13i.glassnotes.utilities.FileIO;
 import io.p13i.glassnotes.utilities.ListUtils;
 
 public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
@@ -111,8 +112,9 @@ public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesData
             @Override
             public void rejected(Throwable t) {
                 Log.e(TAG, "Failed to save to GitHub, trying local disk for note with path " + noteToSave.getAbsoluteResourcePath(), t);
+                String noteFilePath = new File(localDiskGlassNotesDataStore.getStorageDirectory(), getLocalDiskNoteFallbackBaseFilename(noteToSave)).getAbsolutePath();
                 localDiskGlassNotesDataStore.saveNote(new Note(
-                        new File(localDiskGlassNotesDataStore.getStorageDirectory(), "TEMP-" + noteToSave.getFilename()).getAbsolutePath(),
+                        noteFilePath,
                         noteToSave.getFilename(),
                         noteToSave.getContent(),
                         noteToSave.getSha()), new Promise<Note>() {
@@ -130,6 +132,13 @@ public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesData
                 });
             }
         });
+    }
+
+    private String getLocalDiskNoteFallbackBaseFilename(Note note) {
+        String baseFileName = FileIO.basename(note.getFilename());
+        baseFileName = baseFileName.replace(Note.MARKDOWN_EXTENSION, "");
+        baseFileName = baseFileName.replace(".local", "");
+        return baseFileName + ".local" + Note.MARKDOWN_EXTENSION;
     }
 
     @Override

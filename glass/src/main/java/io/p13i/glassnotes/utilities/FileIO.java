@@ -12,6 +12,10 @@ import java.io.IOException;
 
 public class FileIO {
 
+    public static String basename(String longFilename) {
+        return new File(longFilename).getName();
+    }
+
     public static String read(File file) {
         int length = (int) file.length();
 

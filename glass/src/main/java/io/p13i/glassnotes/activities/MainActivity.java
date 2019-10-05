@@ -85,16 +85,9 @@ public class MainActivity extends GlassNotesActivity implements
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // full screen, no app bar
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-
         // Bind to views
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-
-        // Key the screen on
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         mGestureDetector = createGestureDetector(this);
 
@@ -339,14 +332,12 @@ public class MainActivity extends GlassNotesActivity implements
     public boolean onTextViewSelected(TextView textView, Gesture gesture) {
         String selectedText = textView.getText().toString();
         if (selectedText.equals(getResources().getString(R.string.create_new_note))) {
-            Date now = DateUtilities.now();
-            String title = DateUtilities.formatDate(now, "yyyy-MM-dd") + " | " + DateUtilities.formatDate(now, "HH:mm:ss") + " | New note";
+            String title = generateNewNoteFilename("note");
             startEditActivityForNewNoteWithPath(title + Note.MARKDOWN_EXTENSION);
             return true;
 
         } else if (selectedText.equals(getResources().getString(R.string.add_new_todo))) {
-            Date now = DateUtilities.now();
-            String title = DateUtilities.formatDate(now, "yyyy-MM-dd") + " | " + DateUtilities.formatDate(now, "HH:mm:ss") + " | New TODO";
+            String title = generateNewNoteFilename("TODO");
             startEditActivityForNewNoteWithPath(title + Note.MARKDOWN_EXTENSION);
             return true;
 
@@ -382,6 +373,11 @@ public class MainActivity extends GlassNotesActivity implements
         }
 
         return false;
+    }
+
+    private static String generateNewNoteFilename(String noteType) {
+        Date now = DateUtilities.now();
+        return DateUtilities.formatDate(now, "yyyy-MM-dd") + " " + DateUtilities.formatDate(now, "HH:mm:ss") + " New " + noteType;
     }
 
     private void startEditActivityForNewNoteWithPath(String path) {
