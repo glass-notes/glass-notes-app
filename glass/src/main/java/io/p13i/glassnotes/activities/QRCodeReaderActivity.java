@@ -58,7 +58,9 @@ public class QRCodeReaderActivity extends GlassNotesActivity {
         this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Full screen
-        this.getActionBar().hide();
+        if (this.getActionBar() != null ) {
+            this.getActionBar().hide();
+        }
 
         mAutoFocusHandler = new Handler();
 
