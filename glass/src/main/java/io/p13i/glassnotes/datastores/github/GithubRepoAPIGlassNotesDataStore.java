@@ -164,7 +164,7 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
     @Override
     public void saveNote(Note note, Promise<Note> promise) {
         Log.i(TAG, "Saving note at path " + note.getAbsoluteResourcePath());
-        createOrUpdateNote(false, note.getAbsoluteResourcePath(), note.getContent(), note.getSha(), promise);
+        createOrUpdateNote(false, note.getFilename(), note.getContent(), note.getSha(), promise);
     }
 
     @Override

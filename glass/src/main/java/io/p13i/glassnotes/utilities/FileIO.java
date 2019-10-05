@@ -13,7 +13,7 @@ import java.io.IOException;
 public class FileIO {
 
     public static String basename(String longFilename) {
-        return new File(longFilename).getName();
+        return new File(longFilename).getName().replace("/", "");
     }
 
     public static String read(File file) {

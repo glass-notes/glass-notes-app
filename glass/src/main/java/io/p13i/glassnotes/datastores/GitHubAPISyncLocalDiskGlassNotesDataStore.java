@@ -106,6 +106,14 @@ public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesData
             @Override
             public void resolved(Note data) {
                 Log.i(TAG, "Saved to GitHub for note with path " + data.getAbsoluteResourcePath());
+
+                // Delete the local copy
+                if (FileIO.delete(note.getAbsoluteResourcePath())) {
+                    Log.i(TAG, "Deleted old note with name " + note.getFilename());
+                } else {
+                    Log.e(TAG, "Failed to delete old note with path " + note.getFilename());
+                }
+
                 promise.resolved(data);
             }
 

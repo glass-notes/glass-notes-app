@@ -247,7 +247,7 @@ public class MainActivity extends GlassNotesActivity implements
     public boolean onKeyUp(int keyCode, KeyEvent event) {
 
         if (event.isCtrlPressed()) {
-            if (keyCode == KeyEvent.KEYCODE_T) {
+            if (keyCode == KeyEvent.KEYCODE_Q) {
                 startQRCodeActivityToGetPreferences();
                 return true;
             } else if (keyCode == KeyEvent.KEYCODE_DEL) {

@@ -4,8 +4,6 @@ package io.p13i.glassnotes.activities;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
-import android.view.Window;
-import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -51,6 +49,10 @@ public class EditActivity extends GlassNotesActivity {
      * Flag to indicate if saving is currently in progress
      */
     private boolean mSaveInProgress;
+
+    /**
+     * Whether the prior attempt to saved resulted in a resolved promise
+     */
     private boolean mPriorNoteSaveSucceeded = false;
 
     @Override
@@ -63,7 +65,7 @@ public class EditActivity extends GlassNotesActivity {
         // Get the target Note read the activity transition
         mNote = (Note) getIntent().getSerializableExtra(Note.EXTRA_TAG);
 
-        // Disable editing until the file is loaded read the datastore
+        // Disable editing until the file is loaded read the data store
         mNoteEditText.setEnabled(false);
         mNoteEditText.setText(R.string.activity_edit_loading);
         mNoteEditText.setTextColor(getResources().getColor(R.color.white));
@@ -93,7 +95,13 @@ public class EditActivity extends GlassNotesActivity {
 
             @Override
             public void rejected(Throwable t) {
-                Log.e(TAG, "Failed to fetch gist with ID: " + mNote.getAbsoluteResourcePath(), t);
+                Log.e(TAG, "Failed to fetch note with path " + mNote.getAbsoluteResourcePath(), t);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mNoteEditText.setText("Failed to fetch from data store");
+                    }
+                });
                 playSound(Sounds.ERROR);
             }
         });
