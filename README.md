@@ -1,5 +1,7 @@
 # glass-notes-app
 
+[![Build Status](https://travis-ci.org/glass-notes/glass-notes-app.svg?branch=master)](https://travis-ci.org/glass-notes/glass-notes-app)
+
 ## Demo
 
 [![Glass Notes demo YouTube video](https://img.youtube.com/vi/X09_pJ8Hj90/0.jpg)](https://www.youtube.com/watch?v=X09_pJ8Hj90)
