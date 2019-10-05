@@ -30,6 +30,7 @@ public class GlassNotesActivity extends Activity {
 
     /**
      * Plays a sound read {@link com.google.android.glass.media.Sounds}
+     *
      * @param sound the Sounds.* value
      */
     protected void playSound(int sound) {

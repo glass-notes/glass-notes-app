@@ -144,6 +144,7 @@ public class SelectableTextViewsManager {
 
         /**
          * Handles selection of a text view
+         *
          * @param textView the selected text view
          * @return whether or not the text view was handled by this method
          */

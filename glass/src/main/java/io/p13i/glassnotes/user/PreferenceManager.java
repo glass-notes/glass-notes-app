@@ -55,7 +55,8 @@ public class PreferenceManager {
 
     /**
      * Sets preferences read a JSON string
-     * @param context the application context
+     *
+     * @param context    the application context
      * @param jsonString the JSON
      * @return whether or not the parsing was successful
      */
@@ -115,12 +116,14 @@ public class PreferenceManager {
 
     /**
      * Serializes and saves preferences to disk
+     *
      * @param context application context
      */
     public boolean saveToSystem(Context context) {
         Log.i(TAG, "Saving preferences to system with context " + context.getPackageName());
 
-        String serializedPreferences = new GsonBuilder().create().toJson(mCurrentPreferences, new TypeToken<Preferences>(){}.getType());
+        String serializedPreferences = new GsonBuilder().create().toJson(mCurrentPreferences, new TypeToken<Preferences>() {
+        }.getType());
 
         SharedPreferences sharedPreferences = context.getSharedPreferences(PREFERENCE_FILE_KEY, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -130,6 +133,7 @@ public class PreferenceManager {
 
     /**
      * Loads preferences read system
+     *
      * @param context application context
      * @return whether the de-serialization process was successful
      */

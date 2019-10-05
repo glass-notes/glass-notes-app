@@ -4,6 +4,7 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:gravity="center">
+
     <LinearLayout
         android:id="@+id/takepicture"
         android:layout_width="640px"
@@ -23,6 +24,6 @@
             android:layout_height="match_parent"
             android:layout_gravity="center"
             android:textColor="@color/white"
-            android:text="Scan a QR code"/>
+            android:text="Scan a QR code" />
     </LinearLayout>
 </LinearLayout>

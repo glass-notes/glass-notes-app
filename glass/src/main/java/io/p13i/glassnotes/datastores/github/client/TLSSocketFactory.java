@@ -42,12 +42,12 @@ public class TLSSocketFactory extends SSLSocketFactory {
     }
 
     @Override
-    public Socket createSocket(String host, int port) throws IOException, UnknownHostException {
+    public Socket createSocket(String host, int port) throws IOException {
         return enableTLSOnSocket(delegate.createSocket(host, port));
     }
 
     @Override
-    public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException, UnknownHostException {
+    public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException {
         return enableTLSOnSocket(delegate.createSocket(host, port, localHost, localPort));
     }
 
@@ -62,8 +62,8 @@ public class TLSSocketFactory extends SSLSocketFactory {
     }
 
     private Socket enableTLSOnSocket(Socket socket) {
-        if(socket != null && (socket instanceof SSLSocket)) {
-            ((SSLSocket)socket).setEnabledProtocols(new String[] {"TLSv1.1", "TLSv1.2"});
+        if (socket != null && (socket instanceof SSLSocket)) {
+            ((SSLSocket) socket).setEnabledProtocols(new String[]{"TLSv1.1", "TLSv1.2"});
         }
         return socket;
     }

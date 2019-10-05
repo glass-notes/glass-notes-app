@@ -170,7 +170,7 @@ public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Not
     @Override
     public void deleteNote(final Note note, final Promise<Boolean> promise) {
         Log.i(TAG, "Delete note at path " + note.getAbsoluteResourcePath());
-        mGitHubAPIClient.deleteFile(owner,  repo,  note.getAbsoluteResourcePath(),
+        mGitHubAPIClient.deleteFile(owner, repo, note.getAbsoluteResourcePath(),
                 new GithubAPIRepoItemDeleteRequestBody(
                         /* message: */ "delete note :: " + note.getAbsoluteResourcePath(),
                         /* sha: */ note.getSha()

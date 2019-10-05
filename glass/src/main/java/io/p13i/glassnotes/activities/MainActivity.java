@@ -119,44 +119,45 @@ public class MainActivity extends GlassNotesActivity implements
         mSelectableTextViewsManager = new SelectableTextViewsManager(mLinearLayout, this) {
 
             {
-            addManagedTextViewChild(new TextView(MainActivity.this) {{
-                setId(View.generateViewId());
-                setText(R.string.create_new_note);
-                setTextViewCommonStyles(MainActivity.this, this);
-            }});
+                addManagedTextViewChild(new TextView(MainActivity.this) {{
+                    setId(View.generateViewId());
+                    setText(R.string.create_new_note);
+                    setTextViewCommonStyles(MainActivity.this, this);
+                }});
 
-            addManagedTextViewChild(new TextView(MainActivity.this) {{
-                setId(View.generateViewId());
-                setText(R.string.add_new_todo);
-                setTextViewCommonStyles(MainActivity.this, this);
-            }});
+                addManagedTextViewChild(new TextView(MainActivity.this) {{
+                    setId(View.generateViewId());
+                    setText(R.string.add_new_todo);
+                    setTextViewCommonStyles(MainActivity.this, this);
+                }});
 
-            addManagedTextViewChild(new TextView(MainActivity.this) {{
-                setId(View.generateViewId());
-                setText(R.string.load_settings);
-                setTextViewCommonStyles(MainActivity.this, this);
-            }});
+                addManagedTextViewChild(new TextView(MainActivity.this) {{
+                    setId(View.generateViewId());
+                    setText(R.string.load_settings);
+                    setTextViewCommonStyles(MainActivity.this, this);
+                }});
 
-            mRefreshTextView = addManagedTextViewChild(new TextView(MainActivity.this) {{
-                setId(View.generateViewId());
-                setText(R.string.refresh);
-                setTextViewCommonStyles(MainActivity.this, this);
-            }});
+                mRefreshTextView = addManagedTextViewChild(new TextView(MainActivity.this) {{
+                    setId(View.generateViewId());
+                    setText(R.string.refresh);
+                    setTextViewCommonStyles(MainActivity.this, this);
+                }});
 
-            addManagedTextViewChild(new TextView(MainActivity.this) {{
-                setId(View.generateViewId());
-                setText("▲");
-                setTextViewCommonStyles(MainActivity.this, this);
-            }});
+                addManagedTextViewChild(new TextView(MainActivity.this) {{
+                    setId(View.generateViewId());
+                    setText("▲");
+                    setTextViewCommonStyles(MainActivity.this, this);
+                }});
 
-            addManagedTextViewChild(new TextView(MainActivity.this) {{
-                setId(View.generateViewId());
-                setText("▼");
-                setTextViewCommonStyles(MainActivity.this, this);
-            }});
+                addManagedTextViewChild(new TextView(MainActivity.this) {{
+                    setId(View.generateViewId());
+                    setText("▼");
+                    setTextViewCommonStyles(MainActivity.this, this);
+                }});
 
-            init();
-        }};
+                init();
+            }
+        };
     }
 
     /**
@@ -234,7 +235,8 @@ public class MainActivity extends GlassNotesActivity implements
 
     /**
      * Sets the terminal-like style for a text view
-     * @param context the activity context
+     *
+     * @param context  the activity context
      * @param textView the text view to update styles for
      */
     private static void setTextViewCommonStyles(Context context, TextView textView) {
@@ -345,7 +347,7 @@ public class MainActivity extends GlassNotesActivity implements
             startQRCodeActivityToGetPreferences();
             return true;
 
-        }  else if (selectedText.equals(getResources().getString(R.string.refresh))) {
+        } else if (selectedText.equals(getResources().getString(R.string.refresh))) {
             reloadNotes();
             return true;
 
@@ -481,6 +483,7 @@ public class MainActivity extends GlassNotesActivity implements
 
     /**
      * Source https://stackoverflow.com/a/24326948/5071723
+     *
      * @param context
      * @return
      */

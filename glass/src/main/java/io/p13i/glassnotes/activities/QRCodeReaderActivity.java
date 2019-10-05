@@ -58,7 +58,7 @@ public class QRCodeReaderActivity extends GlassNotesActivity {
         this.getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         // Full screen
-        if (this.getActionBar() != null ) {
+        if (this.getActionBar() != null) {
             this.getActionBar().hide();
         }
 
@@ -106,8 +106,8 @@ public class QRCodeReaderActivity extends GlassNotesActivity {
         View viewControl = controlInflater.inflate(R.layout.qr_code_reader_bounding_box, null);
         WindowManager.LayoutParams layoutParamsControl
                 = new WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.FILL_PARENT,
-                    WindowManager.LayoutParams.FILL_PARENT);
+                WindowManager.LayoutParams.FILL_PARENT,
+                WindowManager.LayoutParams.FILL_PARENT);
         this.addContentView(viewControl, layoutParamsControl);
 
         super.onCreate(savedInstanceState);

@@ -117,14 +117,15 @@ public class EditActivity extends GlassNotesActivity {
     void startSaveTimer() {
         mSaveTimer = new Timer();
         mSaveTimer.schedule(new SaveTimerTask(),
-            /* start after: */ PreferenceManager.getInstance().getSavePeriodMs(),
-            /* run every: */ PreferenceManager.getInstance().getSavePeriodMs());
+                /* start after: */ PreferenceManager.getInstance().getSavePeriodMs(),
+                /* run every: */ PreferenceManager.getInstance().getSavePeriodMs());
 
         Log.i(TAG, "Scheduled save timer with interval of " + PreferenceManager.getInstance().getSavePeriodMs() + " ms");
     }
 
     /**
      * Saves the {@code mNote} to the data store
+     *
      * @param promise the callback
      */
     private void saveNote(final Promise<Note> promise) {
@@ -170,7 +171,9 @@ public class EditActivity extends GlassNotesActivity {
         });
     }
 
-    /** Handles key events read the keyboard */
+    /**
+     * Handles key events read the keyboard
+     */
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (event.isCtrlPressed()) {
