@@ -35,6 +35,8 @@ android {
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
 
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+
     compile 'com.squareup.picasso:picasso:2.5.2'
 
     //noinspection GradleDependency
