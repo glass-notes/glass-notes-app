@@ -32,7 +32,7 @@ import retrofit2.Callback;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore<Note> {
+public class GithubRepoAPIGlassNotesDataStore implements GlassNotesDataStore {
 
     private static final String TAG = GithubRepoAPIGlassNotesDataStore.class.getName();
     private final GitHubClient mGitHubAPIClient;

@@ -12,7 +12,7 @@ import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.utilities.FileIO;
 import io.p13i.glassnotes.utilities.ListUtils;
 
-public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
+public class GitHubAPISyncLocalDiskGlassNotesDataStore implements GlassNotesDataStore {
     private static final String TAG = GithubRepoAPIGlassNotesDataStore.class.getName();
 
     private LocalDiskGlassNotesDataStore localDiskGlassNotesDataStore;
