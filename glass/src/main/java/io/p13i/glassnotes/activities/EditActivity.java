@@ -5,10 +5,13 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.glass.media.Sounds;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -20,6 +23,13 @@ import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.ui.StatusTextView;
 import io.p13i.glassnotes.user.PreferenceManager;
 import io.p13i.glassnotes.utilities.DateUtilities;
+import io.p13i.ra.databases.in_memory.InMemoryDocument;
+import io.p13i.ra.databases.in_memory.InMemoryDocumentDatabase;
+import io.p13i.ra.engine.RemembranceAgentEngine;
+import io.p13i.ra.models.Context;
+import io.p13i.ra.models.Query;
+import io.p13i.ra.models.ScoredDocument;
+import io.p13i.ra.utils.KeyboardLoggerBreakingBuffer;
 
 
 /**
@@ -34,6 +44,9 @@ public class EditActivity extends GlassNotesActivity {
 
     @BindView(R.id.note_edit_text)
     EditText mNoteEditText;
+
+    @BindView(R.id.activity_edit_ra_edit_text)
+    TextView mRAEditText;
 
     /**
      * The note being edited
@@ -54,6 +67,10 @@ public class EditActivity extends GlassNotesActivity {
      * Whether the prior attempt to saved resulted in a resolved promise
      */
     private boolean mPriorNoteSaveSucceeded = false;
+
+    private RemembranceAgentEngine remembranceAgentEngine;
+    private Timer remembranceAgentTimer;
+    private KeyboardLoggerBreakingBuffer keyboardBuffer = new KeyboardLoggerBreakingBuffer(50);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,6 +126,75 @@ public class EditActivity extends GlassNotesActivity {
         // Set some status bar elements
         mStatusTextView.setPageTitle(mNote.getFilename());
         mStatusTextView.setStatus("Welcome!");
+
+        PreferenceManager.getInstance().getDataStore().getNotes(new Promise<List<Note>>() {
+            @Override
+            public void resolved(List<Note> data) {
+                Log.i(TAG, "Starting RA for " + data.size() + " documents");
+
+                List<InMemoryDocument> inMemoryDocuments = new LinkedList<InMemoryDocument>();
+                for (Note note : data) {
+                    inMemoryDocuments.add(new InMemoryDocument(note.getContent(), new Context(null, null, getNoteSubject(note), null)));
+                }
+
+                InMemoryDocumentDatabase inMemoryDocumentDatabase = new InMemoryDocumentDatabase(inMemoryDocuments);
+
+                remembranceAgentEngine = new RemembranceAgentEngine(inMemoryDocumentDatabase);
+                remembranceAgentEngine.loadDocuments();
+                remembranceAgentEngine.indexDocuments();
+
+                if (remembranceAgentTimer != null) {
+                    remembranceAgentTimer.purge();
+                    remembranceAgentTimer.cancel();
+                }
+                remembranceAgentTimer = new Timer();
+                remembranceAgentTimer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        String query = keyboardBuffer.toString();
+
+                        Log.i(TAG, "Running RA with query " + query);
+
+                        final List<ScoredDocument> scoredDocuments = remembranceAgentEngine.determineSuggestions(new Query(query, Context.NULL, 3) {{ index(); }});
+
+                        if (scoredDocuments.isEmpty()) {
+                            Log.i(TAG, "Received 0 suggestions");
+                        } else {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    String suggestionText = getScoredDocumentShortString(scoredDocuments.get(0));
+                                    Log.i(TAG, "Setting suggestion text " + suggestionText);
+                                    mRAEditText.setText(suggestionText);
+                                }
+                            });
+                        }
+
+                        for (ScoredDocument scoredDocument : scoredDocuments) {
+                            Log.i(TAG, getScoredDocumentShortString(scoredDocument));
+                        }
+                    }
+                }, 5000, 5000);
+            }
+
+            @Override
+            public void rejected(Throwable t) {
+                Log.i(TAG, "Unable to start RA because notes couldn't be fetched");
+            }
+        });
+    }
+
+    private String getNoteSubject(Note note) {
+        return note.getFilename()
+                .substring(20)
+                .replace(".local", "")
+                .replace(Note.MARKDOWN_EXTENSION, "");
+    }
+
+    private String getScoredDocumentShortString(ScoredDocument scoredDocument) {
+        return scoredDocument.toShortString(25, 3)
+                .replace(".local", "")
+                .replace(Note.MARKDOWN_EXTENSION, "");
     }
 
     /**
@@ -176,6 +262,10 @@ public class EditActivity extends GlassNotesActivity {
      */
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
+        char character = event.getDisplayLabel();
+        keyboardBuffer.addCharacter(character);
+        Log.i(TAG, "Received character " + character);
+
         if (event.isCtrlPressed()) {
             if (keyCode == KeyEvent.KEYCODE_S) {
                 // ctrl-s is a simple save
