@@ -68,8 +68,19 @@ public class EditActivity extends GlassNotesActivity {
      */
     private boolean mPriorNoteSaveSucceeded = false;
 
+    /**
+     * The remembrance agent engine
+     */
     private RemembranceAgentEngine remembranceAgentEngine;
+
+    /**
+     * The timer the RA is running on
+     */
     private Timer remembranceAgentTimer;
+
+    /**
+     * The keyboard buffer that characters are stored in
+     */
     private KeyboardLoggerBreakingBuffer keyboardBuffer = new KeyboardLoggerBreakingBuffer(50);
 
     @Override
@@ -127,22 +138,25 @@ public class EditActivity extends GlassNotesActivity {
         mStatusTextView.setPageTitle(mNote.getFilename());
         mStatusTextView.setStatus("Welcome!");
 
+        // Get all the notes and start the RA with those documents
         PreferenceManager.getInstance().getDataStore().getNotes(new Promise<List<Note>>() {
             @Override
             public void resolved(List<Note> data) {
                 Log.i(TAG, "Starting RA for " + data.size() + " documents");
 
+                // Add all the notes to a document database
                 List<InMemoryDocument> inMemoryDocuments = new LinkedList<InMemoryDocument>();
                 for (Note note : data) {
                     inMemoryDocuments.add(new InMemoryDocument(note.getContent(), new Context(null, null, getNoteSubject(note), null)));
                 }
-
                 InMemoryDocumentDatabase inMemoryDocumentDatabase = new InMemoryDocumentDatabase(inMemoryDocuments);
 
+                // Initialize RA
                 remembranceAgentEngine = new RemembranceAgentEngine(inMemoryDocumentDatabase);
                 remembranceAgentEngine.loadDocuments();
                 remembranceAgentEngine.indexDocuments();
 
+                // Start the update timer
                 if (remembranceAgentTimer != null) {
                     remembranceAgentTimer.purge();
                     remembranceAgentTimer.cancel();
@@ -157,18 +171,20 @@ public class EditActivity extends GlassNotesActivity {
 
                         final List<ScoredDocument> scoredDocuments = remembranceAgentEngine.determineSuggestions(new Query(query, Context.NULL, 3) {{ index(); }});
 
+                        // Stop if no suggestions were received
                         if (scoredDocuments.isEmpty()) {
                             Log.i(TAG, "Received 0 suggestions");
-                        } else {
-                            runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    String suggestionText = getScoredDocumentShortString(scoredDocuments.get(0));
-                                    Log.i(TAG, "Setting suggestion text " + suggestionText);
-                                    mRAEditText.setText(suggestionText);
-                                }
-                            });
+                            return;
                         }
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                String suggestionText = getScoredDocumentShortString(scoredDocuments.get(0));
+                                Log.i(TAG, "Setting suggestion text " + suggestionText);
+                                mRAEditText.setText(suggestionText);
+                            }
+                        });
 
                         for (ScoredDocument scoredDocument : scoredDocuments) {
                             Log.i(TAG, getScoredDocumentShortString(scoredDocument));
@@ -353,6 +369,12 @@ public class EditActivity extends GlassNotesActivity {
             mSaveTimer.purge();
             mSaveTimer.cancel();
             mSaveTimer = null;
+        }
+
+        if (remembranceAgentTimer != null) {
+            remembranceAgentTimer.purge();
+            remembranceAgentTimer.cancel();
+            remembranceAgentTimer = null;
         }
     }
 
