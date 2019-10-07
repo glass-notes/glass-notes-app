@@ -1,6 +1,7 @@
 package io.p13i.glassnotes.activities;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -39,6 +40,8 @@ public class EditActivity extends GlassNotesActivity {
 
     public final static String TAG = EditActivity.class.getName();
 
+    private static List<Note> mNotes;
+
     @BindView(R.id.activity_edit_status)
     StatusTextView mStatusTextView;
 
@@ -69,19 +72,9 @@ public class EditActivity extends GlassNotesActivity {
     private boolean mPriorNoteSaveSucceeded = false;
 
     /**
-     * The remembrance agent engine
+     * The top scored document from the RA
      */
-    private RemembranceAgentEngine remembranceAgentEngine;
-
-    /**
-     * The timer the RA is running on
-     */
-    private Timer remembranceAgentTimer;
-
-    /**
-     * The keyboard buffer that characters are stored in
-     */
-    private KeyboardLoggerBreakingBuffer keyboardBuffer = new KeyboardLoggerBreakingBuffer(50);
+    private ScoredDocument mTopScoredDocument;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -142,55 +135,18 @@ public class EditActivity extends GlassNotesActivity {
         PreferenceManager.getInstance().getDataStore().getNotes(new Promise<List<Note>>() {
             @Override
             public void resolved(List<Note> data) {
+                mNotes = data;
+
                 Log.i(TAG, "Starting RA for " + data.size() + " documents");
 
                 // Add all the notes to a document database
                 List<InMemoryDocument> inMemoryDocuments = new LinkedList<InMemoryDocument>();
                 for (Note note : data) {
-                    inMemoryDocuments.add(new InMemoryDocument(note.getContent(), new Context(null, null, getNoteSubject(note), null)));
+                    inMemoryDocuments.add(new InMemoryDocument(note.getContent(), new Context(null, null, note.getFilename(), null)));
                 }
                 InMemoryDocumentDatabase inMemoryDocumentDatabase = new InMemoryDocumentDatabase(inMemoryDocuments);
 
-                // Initialize RA
-                remembranceAgentEngine = new RemembranceAgentEngine(inMemoryDocumentDatabase);
-                remembranceAgentEngine.loadDocuments();
-                remembranceAgentEngine.indexDocuments();
-
-                // Start the update timer
-                if (remembranceAgentTimer != null) {
-                    remembranceAgentTimer.purge();
-                    remembranceAgentTimer.cancel();
-                }
-                remembranceAgentTimer = new Timer();
-                remembranceAgentTimer.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        String query = keyboardBuffer.toString();
-
-                        Log.i(TAG, "Running RA with query " + query);
-
-                        final List<ScoredDocument> scoredDocuments = remembranceAgentEngine.determineSuggestions(new Query(query, Context.NULL, 3) {{ index(); }});
-
-                        // Stop if no suggestions were received
-                        if (scoredDocuments.isEmpty()) {
-                            Log.i(TAG, "Received 0 suggestions");
-                            return;
-                        }
-
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                String suggestionText = getScoredDocumentShortString(scoredDocuments.get(0));
-                                Log.i(TAG, "Setting suggestion text " + suggestionText);
-                                mRAEditText.setText(suggestionText);
-                            }
-                        });
-
-                        for (ScoredDocument scoredDocument : scoredDocuments) {
-                            Log.i(TAG, getScoredDocumentShortString(scoredDocument));
-                        }
-                    }
-                }, 5000, 5000);
+                startRemembranceAgent(inMemoryDocumentDatabase);
             }
 
             @Override
@@ -200,17 +156,15 @@ public class EditActivity extends GlassNotesActivity {
         });
     }
 
-    private String getNoteSubject(Note note) {
-        return note.getFilename()
-                .substring(20)
-                .replace(".local", "")
-                .replace(Note.MARKDOWN_EXTENSION, "");
-    }
-
-    private String getScoredDocumentShortString(ScoredDocument scoredDocument) {
-        return scoredDocument.toShortString(25, 3)
-                .replace(".local", "")
-                .replace(Note.MARKDOWN_EXTENSION, "");
+    @Override
+    public void onRemembranceAgentSuggestions(final List<ScoredDocument> scoredDocuments) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mTopScoredDocument = scoredDocuments.get(0);
+                mRAEditText.setText(getScoredDocumentShortString(scoredDocuments.get(0)));
+            }
+        });
     }
 
     /**
@@ -278,10 +232,6 @@ public class EditActivity extends GlassNotesActivity {
      */
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
-        char character = event.getDisplayLabel();
-        keyboardBuffer.addCharacter(character);
-        Log.i(TAG, "Received character " + character);
-
         if (event.isCtrlPressed()) {
             if (keyCode == KeyEvent.KEYCODE_S) {
                 // ctrl-s is a simple save
@@ -303,10 +253,33 @@ public class EditActivity extends GlassNotesActivity {
                 // ctrl-x is save and finish activity
                 saveAndFinish();
                 return true;
+            } else if (keyCode == KeyEvent.KEYCODE_R) {
+                if (mTopScoredDocument != null) {
+                    Note note = getNoteWithFileName(mTopScoredDocument.getDocument().getContext().getSubject());
+                    if (note != null) {
+                        Toast.makeText(this, "Starting presentation activity for RA note " + note.getFilename(), Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(this, PresentationActivity.class);
+                        intent.putExtra(Note.EXTRA_TAG, note);
+                        startActivity(intent);
+                        return true;
+                    }
+                }
             }
         }
 
         return super.onKeyUp(keyCode, event);
+    }
+
+    private static Note getNoteWithFileName(String filename) {
+        if (mNotes == null) {
+            return null;
+        }
+        for (Note note : mNotes) {
+            if (note.getFilename().equals(filename)) {
+                return note;
+            }
+        }
+        return null;
     }
 
     /**
