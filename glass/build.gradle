@@ -5,6 +5,7 @@ repositories {
     flatDir {
         dirs 'prebuilt-libs'
     }
+    maven { url 'https://jitpack.io' }
 }
 
 android {
@@ -16,6 +17,7 @@ android {
         targetSdkVersion 26
         versionCode 1
         versionName "1.0"
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -50,4 +52,6 @@ dependencies {
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.8.1'
 
     compile group: 'org.kohsuke', name: 'github-api', version: '1.95'
+
+    compile 'com.github.remembrance-agent:remembrance-agent:3679632eb3'
 }

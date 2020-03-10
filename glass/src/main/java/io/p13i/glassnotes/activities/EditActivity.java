@@ -1,14 +1,18 @@
 package io.p13i.glassnotes.activities;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.glass.media.Sounds;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -20,6 +24,13 @@ import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.ui.StatusTextView;
 import io.p13i.glassnotes.user.PreferenceManager;
 import io.p13i.glassnotes.utilities.DateUtilities;
+import io.p13i.ra.databases.in_memory.InMemoryDocument;
+import io.p13i.ra.databases.in_memory.InMemoryDocumentDatabase;
+import io.p13i.ra.engine.RemembranceAgentEngine;
+import io.p13i.ra.models.Context;
+import io.p13i.ra.models.Query;
+import io.p13i.ra.models.ScoredDocument;
+import io.p13i.ra.utils.KeyboardLoggerBreakingBuffer;
 
 
 /**
@@ -29,11 +40,16 @@ public class EditActivity extends GlassNotesActivity {
 
     public final static String TAG = EditActivity.class.getName();
 
+    private static List<Note> mNotes;
+
     @BindView(R.id.activity_edit_status)
     StatusTextView mStatusTextView;
 
     @BindView(R.id.note_edit_text)
     EditText mNoteEditText;
+
+    @BindView(R.id.activity_edit_ra_edit_text)
+    TextView mRAEditText;
 
     /**
      * The note being edited
@@ -54,6 +70,11 @@ public class EditActivity extends GlassNotesActivity {
      * Whether the prior attempt to saved resulted in a resolved promise
      */
     private boolean mPriorNoteSaveSucceeded = false;
+
+    /**
+     * The top scored document from the RA
+     */
+    private ScoredDocument mTopScoredDocument;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,6 +130,41 @@ public class EditActivity extends GlassNotesActivity {
         // Set some status bar elements
         mStatusTextView.setPageTitle(mNote.getFilename());
         mStatusTextView.setStatus("Welcome!");
+
+        // Get all the notes and start the RA with those documents
+        PreferenceManager.getInstance().getDataStore().getNotes(new Promise<List<Note>>() {
+            @Override
+            public void resolved(List<Note> data) {
+                mNotes = data;
+
+                Log.i(TAG, "Starting RA for " + data.size() + " documents");
+
+                // Add all the notes to a document database
+                List<InMemoryDocument> inMemoryDocuments = new LinkedList<InMemoryDocument>();
+                for (Note note : data) {
+                    inMemoryDocuments.add(new InMemoryDocument(note.getContent(), new Context(null, null, note.getFilename(), null)));
+                }
+                InMemoryDocumentDatabase inMemoryDocumentDatabase = new InMemoryDocumentDatabase(inMemoryDocuments);
+
+                startRemembranceAgent(inMemoryDocumentDatabase);
+            }
+
+            @Override
+            public void rejected(Throwable t) {
+                Log.i(TAG, "Unable to start RA because notes couldn't be fetched");
+            }
+        });
+    }
+
+    @Override
+    public void onRemembranceAgentSuggestions(final List<ScoredDocument> scoredDocuments) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mTopScoredDocument = scoredDocuments.get(0);
+                mRAEditText.setText(getScoredDocumentShortString(scoredDocuments.get(0)));
+            }
+        });
     }
 
     /**
@@ -197,10 +253,33 @@ public class EditActivity extends GlassNotesActivity {
                 // ctrl-x is save and finish activity
                 saveAndFinish();
                 return true;
+            } else if (keyCode == KeyEvent.KEYCODE_R) {
+                if (mTopScoredDocument != null) {
+                    Note note = getNoteWithFileName(mTopScoredDocument.getDocument().getContext().getSubject());
+                    if (note != null) {
+                        Toast.makeText(this, "Starting presentation activity for RA note " + note.getFilename(), Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(this, PresentationActivity.class);
+                        intent.putExtra(Note.EXTRA_TAG, note);
+                        startActivity(intent);
+                        return true;
+                    }
+                }
             }
         }
 
         return super.onKeyUp(keyCode, event);
+    }
+
+    private static Note getNoteWithFileName(String filename) {
+        if (mNotes == null) {
+            return null;
+        }
+        for (Note note : mNotes) {
+            if (note.getFilename().equals(filename)) {
+                return note;
+            }
+        }
+        return null;
     }
 
     /**
@@ -263,6 +342,12 @@ public class EditActivity extends GlassNotesActivity {
             mSaveTimer.purge();
             mSaveTimer.cancel();
             mSaveTimer = null;
+        }
+
+        if (remembranceAgentTimer != null) {
+            remembranceAgentTimer.purge();
+            remembranceAgentTimer.cancel();
+            remembranceAgentTimer = null;
         }
     }
 

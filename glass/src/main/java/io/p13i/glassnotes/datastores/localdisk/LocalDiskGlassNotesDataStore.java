@@ -15,7 +15,7 @@ import io.p13i.glassnotes.datastores.Promise;
 import io.p13i.glassnotes.models.Note;
 import io.p13i.glassnotes.utilities.FileIO;
 
-public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore<Note> {
+public class LocalDiskGlassNotesDataStore implements GlassNotesDataStore {
     private static final String TAG = LocalDiskGlassNotesDataStore.class.getName();
     private static final String LOCAL_STORAGE_DIRECTORY = "glass-notes";
 
